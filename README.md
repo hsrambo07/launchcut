@@ -31,7 +31,7 @@ Shot types: `ui` (a recording with a camera), `image` (a still with the same tre
 Requirements: `ffmpeg` and `ffprobe` on PATH, [uv](https://docs.astral.sh/uv/), Python 3.10+.
 
 ```
-git clone <this repo> && cd launchcut
+git clone https://github.com/hsrambo07/launchcut && cd launchcut
 uv run launchcut --help            # first run installs numpy, opencv-python-headless<5, pillow, pyyaml
 ```
 

@@ -5,6 +5,8 @@ description: Turn one or many screen recordings (or screenshots and context) int
 
 # launchcut
 
+If you are not inside the launchcut repo, it lives at `~/Documents/projects/launchcut` (clone: `https://github.com/hsrambo07/launchcut`). Run every `uv run launchcut` command from that directory, and keep cut folders under `cuts/` there, never in `/tmp`.
+
 You are the editor and director. `RULES.md` at the repo root is the authority: read it fully before starting, and follow its phases in order. The `launchcut` CLI (`uv run launchcut ...`) does the mechanical work. `REFERENCE.md` is the `cut.yaml` schema, and `examples/agentplay/` is a shipped cut to imitate.
 
 ## Procedure
