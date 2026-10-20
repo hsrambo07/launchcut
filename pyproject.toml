@@ -1,0 +1,21 @@
+[project]
+name = "launchcut"
+version = "0.1.0"
+description = "Turn screen recordings and context into directed launch cuts: probe, plan, render, SFX, deliver, QA."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.9,<5",
+    "pillow>=10.1",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+launchcut = "launchcut.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["launchcut"]

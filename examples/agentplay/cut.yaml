@@ -1,0 +1,91 @@
+# AgentPlay product cut (v2, 14 s). Posted as a quote tweet of the launch film, so it opens on the product, not on words.
+# Coordinates are recording pixels (2982x1638). Times inside a shot are seconds from the start of that shot.
+# Read PLAN.md next to this file for the why behind every number.
+
+name: agentplay-launch-v2
+extends: style.yaml
+
+sources:
+  main: "~/Desktop/Screen Recording 2026-10-14 at 9.57.23*PM.mov"   # glob: macOS puts a narrow no-break space before PM
+
+audio:
+  open_hit: true
+  beat: {bpm: 120, from: 0.0, to: 10.0}
+
+shots:
+  - id: replay
+    type: ui
+    source: main
+    duration: 3.5
+    src: {start: 14.2, speed: 1.7}            # the viewer replaying the session, 1.7x so the graph grows on screen
+    enter: none                                # frame 0 is the tweet thumbnail: crisp, whole app visible
+    exit: {type: whip, d: 0.3, k: 2.2}
+    camera:
+      - {t: 0.0, zoom: 0.93}
+      - {t: 0.3, zoom: 0.93}
+      - {t: 3.1, zoom: 1.972, center: [1450, 720], ease: inOutCubic}
+    caption: {text: "*Replay* the whole session.", in: 0.6, out: 3.25}
+    busy: [[0.3, 3.1]]                         # SFX: data ticks while the graph grows
+
+  - id: session
+    type: ui
+    source: main
+    duration: 2.5
+    src: {start: 2.6, speed: 0.5}
+    camera:
+      - {t: 0.0, zoom: 3.337, center: [380, 390]}
+      - {t: 2.5, zoom: 3.716, center: [380, 390], ease: linear}
+    rings:
+      - {box: [258, 360, 376, 405], at: 0.4}                     # 6 tasks
+      - {box: [66, 420, 244, 462], at: 0.8}                      # 4 subagents
+      - {box: [254, 420, 378, 462], at: 1.2, color: alert}       # 5 errors
+      - {box: [350, 318, 527, 352], at: 1.6, pad: 6, radius: 10} # 1h 30m · $8.26
+    caption: {text: "Every task, call and *cost.*", in: 0.22, out: 2.36}
+
+  - id: failure
+    type: ui
+    source: main
+    duration: 2.75
+    src: [[0.0, 11.35], [0.3, 11.65], [2.55, 12.65], [2.75, 12.85]]   # slowed in the middle so the click reads
+    camera:
+      - {t: 0.0, zoom: 2.199, center: [640, 960]}
+      - {t: 0.75, zoom: 2.351, center: [640, 960], ease: linear}
+      - {t: 0.86, zoom: 2.351, center: [640, 960]}
+      - {t: 1.54, zoom: 3.564, center: [1110, 800], ease: inOutCubic}
+      - {t: 2.6, zoom: 3.778, center: [1110, 800], ease: linear}
+    rings:
+      - {box: [40, 1042, 639, 1144], at: 0.12, color: alert, pad: 4, radius: 22}   # timeout row
+    pulses:
+      - {point: [1151, 787], at: 0.75, color: alert, r: 26}                         # get_monitor node
+    clicks: [0.64]
+    caption: {text: "Find where it !broke.!", in: 0.2, out: 2.61}
+
+  - id: filter
+    type: ui
+    source: main
+    duration: 2.5
+    src: [[0.0, 25.2], [0.3, 25.5], [1.9, 26.1], [2.5, 26.7]]
+    camera:
+      - {t: 0.0, zoom: 2.048, center: [1490, 700]}
+      - {t: 0.7, zoom: 2.048, center: [1490, 700]}
+      - {t: 1.9, zoom: 2.275, center: [1280, 600], ease: outCubic}
+      - {t: 2.18, zoom: 0.8, ease: inOutCubic}                 # pull out to the whole app before the dive
+    kicks: [{at: 0.7, amount: 0.06}]                           # the graph collapses to the error path
+    clicks: [0.67]
+    collapses: [0.7]
+    exit: {type: dive, box: [40, 40, 244, 94], d: 0.32, scale: 4.4}   # into the header lockup
+    caption: {text: "*Filter* to what matters.", in: 0.12, out: 1.79}
+
+  - id: end
+    type: end
+    duration: 2.75
+    lockup:
+      mark: assets/mark.svg
+      mark_color: "#C4DE96"
+      tile: {color: "#2C343A", radius: 0.22}
+      wordmark: agentplay
+      font: "InterVariable@SemiBold"
+      width: 800
+      y: 430
+    command: {text: "uvx agentplay", prefix: "$ ", at: 0.45}
+    tagline: {text: "Free · Local · Open source", at: 0.92}

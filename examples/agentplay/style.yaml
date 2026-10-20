@@ -1,0 +1,18 @@
+# Brand style for AgentPlay / Entelligence cuts. Share one style file across many cut.yaml files with `extends:`.
+output:
+  preset: twitter-16x9
+  # deliver_to: "~/Desktop"     # copy finished masters somewhere handy
+
+style:
+  palette:
+    bg: "#141415"
+    text: "#F2F2F0"
+    accent: "#A4E42A"      # Entelligence lime
+    alert: "#F26858"
+    muted: "#A5A5A5"
+  fonts:
+    display: "Geist-SemiBold"
+    body: "Geist-Medium"
+    mono: "GeistMono-Medium"
+  grade: {black: 20, gain: 1.18, out_black: 18}   # lifts a dim dark-mode UI so it reads on phones
+  caption: {size: 78, margin: 74}           # px at 1080p, scaled for other sizes

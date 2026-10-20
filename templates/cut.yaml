@@ -1,0 +1,78 @@
+# Fill this from PLAN.md. Schema: REFERENCE.md. Rules: RULES.md.
+# Coordinates are source pixels (lock them with `launchcut grid`). Shot times are seconds from the shot's start.
+
+name: my-cut
+# extends: ../style.yaml          # share brand style across cuts
+
+output:
+  preset: twitter-16x9
+
+sources:
+  main: "recordings/main.mov"
+
+style:
+  palette: {bg: "#141415", text: "#F2F2F0", accent: "#A4E42A", alert: "#F26858", muted: "#A5A5A5"}
+  grade: {black: 20, gain: 1.18, out_black: 18}   # dark-mode UI lift; set gain: 1 to leave the recording untouched
+
+audio:
+  open_hit: true
+  beat: {bpm: 120, from: 0.0, to: 9.0}
+
+shots:
+  # 1. Reveal: frame 0 is the thumbnail, so start crisp on the whole product, then push in
+  - id: reveal
+    type: ui
+    source: main
+    duration: 3.5
+    src: {start: 0.0, speed: 1.6}
+    enter: none
+    exit: {type: whip, d: 0.3, k: 2.2}
+    camera:
+      - {t: 0.0, zoom: 0.93}
+      - {t: 0.3, zoom: 0.93}
+      - {t: 3.1, frame: [800, 300, 2000, 1000], ease: inOutCubic}
+    caption: {text: "*Verb* the main thing.", in: 0.6, out: 3.25}
+
+  # 2. Proof: land, highlight, hold
+  - id: proof
+    type: ui
+    source: main
+    duration: 2.6
+    src: {start: 10.0, speed: 0.6}
+    camera:
+      - {t: 0.0, frame: [40, 200, 900, 700]}
+      - {t: 2.6, frame: [80, 220, 860, 680], ease: linear}
+    rings:
+      - {box: [100, 300, 300, 350], at: 0.4}
+      - {box: [320, 300, 520, 350], at: 0.8}
+    caption: {text: "See every *detail.*", in: 0.25, out: 2.45}
+
+  # 3. Payoff: follow the click to the result
+  - id: payoff
+    type: ui
+    source: main
+    duration: 2.8
+    src: [[0.0, 20.0], [0.3, 20.3], [2.5, 21.3], [2.8, 21.6]]
+    camera:
+      - {t: 0.0, frame: [0, 600, 1300, 1330]}
+      - {t: 0.85, frame: [0, 600, 1300, 1330]}
+      - {t: 1.55, frame: [900, 600, 1500, 950], ease: inOutCubic}
+    pulses:
+      - {point: [1150, 780], at: 0.8, color: alert}
+    clicks: [0.6]
+    exit: {type: dive, box: [40, 40, 244, 94], d: 0.32, scale: 4.4}   # into the header logo
+    caption: {text: "Find what !broke.!", in: 0.2, out: 2.3}
+
+  # 4. Call to action
+  - id: end
+    type: end
+    duration: 2.75
+    lockup:
+      mark: assets/mark.svg
+      mark_color: accent
+      tile: {color: "#2C343A", radius: 0.22}
+      wordmark: product
+      width: 800
+      y: 430
+    command: {text: "npx product", at: 0.45}
+    tagline: {text: "Free · Local · Open source", at: 0.92}

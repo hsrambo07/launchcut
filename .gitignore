@@ -1,0 +1,13 @@
+out/
+probe/
+stills/
+qa/
+__pycache__/
+*.pyc
+.venv/
+*.mov
+*.mp4
+*.m4v
+*.wav
+!examples/**/assets/*.wav
+.DS_Store
