@@ -11,3 +11,4 @@ __pycache__/
 *.wav
 !examples/**/assets/*.wav
 .DS_Store
+!docs/*.mp4
