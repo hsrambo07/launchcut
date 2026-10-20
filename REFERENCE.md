@@ -51,6 +51,22 @@ audio:
 
 allow_dark_frames: false         # renderer aborts on a black frame unless this is true
 
+subtitles:                       # word-synced subtitles from `launchcut transcribe` (talking heads)
+  transcript: probe/clip/transcript.json
+  words: 3                       # max words on screen at once
+  gap: 0.35                      # a pause this long starts a new chunk
+  mode: highlight                # highlight (all words, current one accented) | reveal (words appear as spoken)
+  size: 80                       # px at 1080 (short side)
+  y: 1350                        # centre of the subtitle block, px at 1080 (short side); default 70% of height
+  emphasis: [agents, mistakes]   # always accented
+  upper: false
+  hide_punct: true
+  hold: 0.5                      # how long the last chunk stays after its final word
+  max_width: 0.84
+  fix: {Intelligence: Entelligence}   # correct names the transcript got wrong (also try transcribe --prompt)
+# audio.dialog: true plays each video shot's own sound (src speed must be 1); shots can override with sound: source | mute
+# shots can turn subtitles off with subtitles: false (end cards never show them)
+
 shots: [...]                     # played in order; each shot's duration sets the edit
 ```
 

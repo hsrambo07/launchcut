@@ -304,6 +304,37 @@ Variations that come up often:
 
 ---
 
+## 6b. Talking heads, interviews, founder clips
+
+When the footage is a person speaking, the words are the content. Dissect the speech first and direct the picture around it.
+
+1. **Probe with speech:** `uv run --extra speech launchcut probe clip.mov --transcribe`. This adds:
+   - `transcript.md`: sentences with timings, hard fillers (um, uh), soft fillers (like, you know, basically), words per minute, every pause of 0.35 s or more, and ranked soundbite candidates.
+   - **Face boxes** in `inventory.md`, for framing punch-ins.
+2. **Find the hook.** It's the single strongest, complete claim, usually not the first sentence. Open on it, mid-thought if needed. Frame 0 is her face mid-word, not a title card.
+3. **Build a keep list from whole phrases:**
+   - Cut on the pauses the transcript lists, never inside a word.
+   - Drop hard fillers, false starts and repeats.
+   - Keep soft fillers that carry tone.
+   - Aim for 15 to 45 s, or shorter if the hook stands alone.
+4. **Hide every jump cut with a framing change:**
+   - Alternate wide (`zoom` that shows hands and table) with a punch on the face (about 1.25 to 1.4x the wide), and go tighter on the key line.
+   - Hard cuts only: set `enter: none` and `exit: none` in `style`.
+   - Whips and dives would fight speech, so save them for the end card.
+5. **Sound:**
+   - Set `audio.dialog: true` and every shot's `src.speed` to 1, so her own sound plays cut for cut. It stays untouched except for 8 ms fades at each join.
+   - Keep SFX sparse and low (`audio.gain` 0.3 to 0.5): a soft hit on the hook line and a pop on the key number.
+   - No beat bed under speech unless it is very low. Never cover a word.
+6. **Subtitles replace captions:**
+   - Set `subtitles:` on the cut. Words land 3 at a time in sync with speech, the word being said lights up in the accent colour, and `emphasis:` words stay accented.
+   - Place them where the face is not: lower third for a seated shot, upper third if hands or product sit low.
+7. **Validate by ear and by eye:**
+   - Every cut lands on a pause.
+   - No clipped syllables.
+   - Subtitles match the words exactly.
+   - The face is never cut off by subtitles or the frame edge.
+   - The voice-only master sounds natural.
+
 ## 7. Pitfalls we already paid for
 
 - **Screen recordings are variable frame rate.** The engine always decodes through `-vf fps=<fps>`. Do not bypass it, or timings drift.

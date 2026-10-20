@@ -1,10 +1,10 @@
 """Frame compositor. Shot types: ui (recording or image with a camera), card (type on the background), end (lockup,
 typed command, tagline). Motion blur supersamples the camera when it moves fast; everything else is drawn per sample."""
-import math, os, subprocess, sys
+import json, math, os, re, subprocess, sys
 import numpy as np
 import cv2
 from .camera import ShotCamera, CanvasCamera, homog, to_screen
-from .draw import Line, background, blit, font, lockup, pill, rounded_mask, sdf_ring, text_rgba
+from .draw import Line, background, blit, font, lockup, pill, rounded_mask, sdf_ring, stroke_text, text_rgba
 from .ease import c01, ease, lerp, seg
 from .media import grade_lut, open_source, source_size
 
@@ -27,6 +27,11 @@ class Renderer:
         for p, (w, h) in self.sizes.items():
             self.masks[p] = rounded_mask(w // 2, h // 2, st["window"]["radius"] / 2)
         self.glow_cache = {}
+        self.subs = cut.cfg.get("subtitles")
+        self.sub_words, self.sub_cache, self.sub_chunks = [], {}, {}
+        if self.subs:
+            with open(cut.asset(self.subs["transcript"])) as f:
+                self.sub_words = json.load(f)["words"]
 
     # ---------------- helpers ----------------
     def color(self, c, default="accent"):
@@ -119,7 +124,94 @@ class Renderer:
             img = bg * (1 - a[..., None]) + img * a[..., None]
         self.overlays(img, sh, t, M, cam)
         self.caption(img, sh, t)
+        self.subtitles(img, sh, t)
         return img
+
+    # ---------------- word-synced subtitles ----------------
+    def chunks_for(self, sh):
+        """words spoken inside this shot's source window, grouped into short chunks that never span a cut"""
+        if sh["id"] in self.sub_chunks:
+            return self.sub_chunks[sh["id"]]
+        cfg = self.subs
+        s0, s1 = self.src_time(sh, 0.0), self.src_time(sh, sh["duration"])
+        ws = []
+        for w in self.sub_words:
+            if not (s0 <= (w["s"] + w["e"]) / 2 <= s1):
+                continue
+            if ws and re.match(r"^[-'’]", w["w"]):          # whisper splits "self -improving", "don 't": glue back
+                ws[-1] = {**ws[-1], "w": ws[-1]["w"] + w["w"], "e": w["e"]}
+            else:
+                ws.append(dict(w))
+        out, cur = [], []
+        nmax, gap = int(cfg.get("words", 3)), float(cfg.get("gap", 0.35))
+        for i, w in enumerate(ws):
+            cur.append(w)
+            nxt = ws[i + 1] if i + 1 < len(ws) else None
+            if len(cur) >= nmax or re.search(r"[.!?,;:]$", w["w"]) or nxt is None or nxt["s"] - w["e"] > gap:
+                out.append(cur)
+                cur = []
+        self.sub_chunks[sh["id"]] = out
+        return out
+
+    def subtitles(self, img, sh, t):
+        if not self.subs or not sh.get("subtitles", True):
+            return
+        cfg, k = self.subs, self.k
+        ts = self.src_time(sh, t)
+        chunks = self.chunks_for(sh)
+        cur = None
+        for j, ch in enumerate(chunks):
+            end = min(chunks[j + 1][0]["s"] if j + 1 < len(chunks) else 1e9, ch[-1]["e"] + float(cfg.get("hold", 0.5)))
+            if ch[0]["s"] - 0.04 <= ts < end:
+                cur = (j, ch)
+        if cur is None:
+            return
+        j, ch = cur
+        size = float(cfg.get("size", 80)) * k
+        f = self.font(cfg.get("font", "display"), cfg.get("size", 80))
+        emph = {re.sub(r"[^a-z0-9']", "", e.lower()) for e in cfg.get("emphasis", [])}
+        mode = cfg.get("mode", "highlight")
+        words = []
+        for i, w in enumerate(ch):
+            txt = w["w"]
+            for wrong, right in (cfg.get("fix") or {}).items():
+                txt = re.sub(rf"\b{re.escape(wrong)}\b", right, txt)
+            if cfg.get("hide_punct", True):
+                txt = re.sub(r"[.,;:]+$", "", txt)
+            if cfg.get("upper"):
+                txt = txt.upper()
+            spoken = w["s"] <= ts + 0.02
+            if mode == "reveal" and not spoken:
+                continue
+            active = spoken and (i + 1 == len(ch) or ch[i + 1]["s"] > ts + 0.02)
+            role = "accent" if (active and mode == "highlight") or re.sub(r"[^a-z0-9']", "", w["w"].lower()) in emph else "text"
+            key = (txt, role, int(size))
+            if key not in self.sub_cache:
+                self.sub_cache[key] = stroke_text(txt, f, self.color(role), max(2, size * 0.055)) + (f.getlength(txt),)
+            words.append(self.sub_cache[key])
+        if not words:
+            return
+        space = f.getlength(" ")
+        maxw = self.W * float(cfg.get("max_width", 0.84))
+        lines, line, lw = [], [], 0.0
+        pad = int(max(2, size * 0.055)) + 6
+        for wd in words:
+            ww = wd[3]
+            if line and lw + space + ww > maxw:
+                lines.append((line, lw)); line, lw = [], 0.0
+            lw = lw + (space if line else 0) + ww
+            line.append(wd)
+        lines.append((line, lw))
+        y_c = float(cfg.get("y", self.H * 0.70 / k)) * k
+        lh = size * 1.18
+        u = ease("outExpo", seg(ts, ch[0]["s"] - 0.04, ch[0]["s"] + 0.16))
+        rise = 14 * k * (1 - u)
+        for li, (line, lw) in enumerate(lines):
+            x = self.W / 2 - lw / 2
+            base = y_c - (len(lines) - 1) * lh / 2 + li * lh + size * 0.35 + rise
+            for rgb, a, bl, ww in line:
+                blit(img, rgb, a, x - pad, base - bl, c01(u * 1.5))
+                x += ww + space
 
     def overlays(self, img, sh, t, M, cam):
         rs = self.cut.style["ring"]

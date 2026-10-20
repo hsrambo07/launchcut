@@ -10,6 +10,9 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
+[project.optional-dependencies]
+speech = ["faster-whisper>=1.0"]   # transcripts, word-synced subtitles, talking-head dissection
+
 [project.scripts]
 launchcut = "launchcut.cli:main"
 

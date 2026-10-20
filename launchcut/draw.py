@@ -57,6 +57,27 @@ def text_rgba(txt, fnt, color):
     return rgb, a, asc + 4
 
 
+def stroke_text(txt, fnt, color, stroke, stroke_color=(0, 0, 0)):
+    """text with an outline (for subtitles over bright footage): rgb, alpha, baseline"""
+    asc, desc = fnt.getmetrics()
+    pad = int(stroke) + 6
+    w = int(math.ceil(fnt.getlength(txt))) + 2 * pad
+    h = asc + desc + 2 * pad
+    sa_im = Image.new("L", (max(w, 1), h), 0)
+    ImageDraw.Draw(sa_im).text((pad, pad), txt, font=fnt, fill=255, stroke_width=int(stroke), stroke_fill=255)
+    fa_im = Image.new("L", (max(w, 1), h), 0)
+    ImageDraw.Draw(fa_im).text((pad, pad), txt, font=fnt, fill=255)
+    sa = np.asarray(sa_im, np.float32) / 255.0
+    fa = np.asarray(fa_im, np.float32) / 255.0
+    sh = cv2.GaussianBlur(np.roll(sa, max(1, int(stroke * 0.6)), axis=0), (0, 0), max(1.0, stroke * 1.2)) * 0.55   # soft drop shadow
+    sa = np.maximum(sa, sh)
+    a = np.maximum(sa, fa)
+    col = np.float32(color)
+    sc = np.float32(stroke_color)
+    rgb = (col * fa[..., None] + sc * (sa * (1 - fa))[..., None]) / np.maximum(a, 1e-4)[..., None]
+    return rgb.astype(np.float32), a, asc + pad
+
+
 def blit(dst, rgb, a, x, y, alpha=1.0):
     H, W = dst.shape[:2]
     h, w = a.shape

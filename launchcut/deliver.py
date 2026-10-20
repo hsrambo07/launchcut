@@ -24,7 +24,7 @@ def deliver(cut, picture, audio):
     run(["ffmpeg", "-v", "error", "-y", "-i", dl, "-c", "copy", "-an", "-movflags", "+faststart", muted])
     outs["muted"] = muted
     if audio.get("vo"):
-        vo = cut.out(f"{cut.name}-vo-only.mp4")
+        vo = cut.out(f"{cut.name}-voice-only.mp4")
         run(["ffmpeg", "-v", "error", "-y", "-i", dl, "-i", audio["vo"], "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-af", norm,
              "-ar", "48000", "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", vo])
         outs["vo_only"] = vo

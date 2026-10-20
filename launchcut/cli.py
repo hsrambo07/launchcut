@@ -3,6 +3,7 @@
   new      scaffold a cut folder (cut.yaml + PLAN.md) from the templates
   probe    inventory a recording: specs, audio, contact sheets, motion spikes
   grid     full-res frame with a coordinate grid, to lock boxes and points
+  transcribe  word-timed transcript + sentences, pauses, fillers, soundbites (needs --extra speech)
   stills   render chosen moments of a cut to PNGs + a sheet (fast review loop)
   render   render the picture master (add --draft for a quick pass)
   sfx      synthesize the SFX bed, mix narration if any, write the cue sheet
@@ -34,8 +35,17 @@ def cmd_new(a):
 def cmd_probe(a):
     from .probe import probe
     for p in a.recordings:
-        rep, d = probe(os.path.expanduser(p), a.out, a.region, a.fps)
+        rep, d = probe(os.path.expanduser(p), a.out, a.region, a.fps, a.transcribe)
         print(f"{p}\n  -> {rep}")
+
+
+def cmd_transcribe(a):
+    from .speech import transcribe
+    for p in a.clips:
+        p = os.path.expanduser(p)
+        name = os.path.splitext(os.path.basename(p))[0].replace(" ", "_").replace("\u202f", "_")
+        js, md = transcribe(p, os.path.join(a.out, name), a.model, prompt=a.prompt)
+        print(f"{p}\n  -> {md}\n  -> {js}")
 
 
 def cmd_grid(a):
@@ -112,7 +122,11 @@ def main(argv=None):
     s = sub.add_parser("new"); s.add_argument("dir"); s.set_defaults(fn=cmd_new)
     s = sub.add_parser("probe"); s.add_argument("recordings", nargs="+"); s.add_argument("--out", default="probe")
     s.add_argument("--region", nargs=4, type=int, metavar=("X0", "Y0", "X1", "Y1"), help="measure motion only inside this box")
-    s.add_argument("--fps", type=float, default=2.0, help="contact sheet rate"); s.set_defaults(fn=cmd_probe)
+    s.add_argument("--fps", type=float, default=2.0, help="contact sheet rate")
+    s.add_argument("--transcribe", action="store_true", help="also transcribe speech (needs --extra speech)"); s.set_defaults(fn=cmd_probe)
+    s = sub.add_parser("transcribe"); s.add_argument("clips", nargs="+"); s.add_argument("--out", default="probe")
+    s.add_argument("--model", default="small.en", help="faster-whisper model: tiny.en base.en small.en medium.en large-v3")
+    s.add_argument("--prompt", help="names and jargon to expect, e.g. 'Entelligence, AgentPlay'"); s.set_defaults(fn=cmd_transcribe)
     s = sub.add_parser("grid"); s.add_argument("recording"); s.add_argument("t", type=float)
     s.add_argument("--box", nargs=4, type=int, metavar=("X0", "Y0", "X1", "Y1")); s.add_argument("--step", type=int, default=100)
     s.add_argument("--out"); s.set_defaults(fn=cmd_grid)

@@ -87,7 +87,23 @@ def plot(t, d, spikes, out, w=1600, h=300):
     cv2.imwrite(out, img)
 
 
-def probe(path, out_root="probe", region=None, sheet_fps=2.0):
+def faces(path, fps=1.0):
+    """frontal faces per second (OpenCV Haar cascade), in source pixels: helps frame talking heads"""
+    info = ffprobe(path)
+    arr = frames(path, fps, 540)
+    k = info["width"] / 540.0
+    casc = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+    out = []
+    for i, im in enumerate(arr):
+        g = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+        fs = casc.detectMultiScale(g, 1.1, 6, minSize=(40, 40))
+        if len(fs):
+            x, y, w, h = max(fs, key=lambda r: r[2] * r[3])
+            out.append((i / fps, [int(x * k), int(y * k), int((x + w) * k), int((y + h) * k)]))
+    return out
+
+
+def probe(path, out_root="probe", region=None, sheet_fps=2.0, transcribe=False):
     name = os.path.splitext(os.path.basename(path))[0].replace(" ", "_").replace(" ", "_")
     d = os.path.join(out_root, name)
     os.makedirs(d, exist_ok=True)
@@ -118,6 +134,17 @@ def probe(path, out_root="probe", region=None, sheet_fps=2.0):
         f.write("\n## Active windows (playback, typing, animation)\n\n| from | to |\n|---|---|\n")
         for a, b in wins:
             f.write(f"| {a:.1f} | {b:.1f} |\n")
+        fc = faces(path)
+        if fc:
+            med = np.median(np.array([b for _, b in fc]), axis=0).astype(int).tolist()
+            f.write(f"\n## Faces\n\nA face in {len(fc)} of {int(info['duration'])} sampled seconds; median box {med} (source px). "
+                    "Frame punch-ins around it, eyes about a third from the top.\n\n| t | box |\n|---|---|\n")
+            for t, b in fc:
+                f.write(f"| {t:.0f} | {b} |\n")
+        if transcribe and info["has_audio"]:
+            from .speech import transcribe as tr
+            js, md = tr(path, d)
+            f.write(f"\nSpeech: `transcript.md` (sentences, pauses, fillers, soundbite candidates) and `transcript.json` (word times).\n")
         f.write("\nNext: look at the sheets around each spike, write the beat map in PLAN.md, then lock boxes with `launchcut grid`.\n")
     return rep, d
 

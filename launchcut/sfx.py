@@ -208,6 +208,41 @@ def read_audio(path, dur):
     return np.pad(x, (0, max(0, n - len(x))))[:n]
 
 
+_audio_cache = {}
+
+
+def dialog_track(cut, n):
+    """the recordings' own sound, cut exactly like the picture. Samples are untouched apart from 8 ms fades at
+    each cut so joins do not click. Shots opt in with `sound: source`, or all video shots with `audio.dialog: true`."""
+    out, used = np.zeros(n), False
+    fade = int(0.008 * SR)
+    for sh in cut.shots:
+        if sh["type"] != "ui" or sh.get("sound", "source" if cut.audio.get("dialog") else "mute") != "source":
+            continue
+        spec = sh.get("src", {"start": 0.0, "speed": 1.0})
+        if not isinstance(spec, dict) or abs(float(spec.get("speed", 1.0)) - 1.0) > 1e-6:
+            print(f"[launchcut] shot {sh['id']}: source sound needs src {{start, speed: 1}}; muted")
+            continue
+        path = cut.sources[sh["source"]]
+        if path not in _audio_cache:
+            raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-vn", "-ac", "1", "-ar", str(SR), "-f", "f64le", "-"],
+                                 capture_output=True).stdout
+            _audio_cache[path] = np.frombuffer(raw, dtype=np.float64)
+        x = _audio_cache[path]
+        a0 = int(float(spec.get("start", 0.0)) * SR)
+        seg = x[a0:a0 + int(sh["duration"] * SR)].copy()
+        if len(seg) == 0:
+            continue
+        k = min(fade, len(seg) // 2)
+        seg[:k] *= np.linspace(0, 1, k)
+        seg[-k:] *= np.linspace(1, 0, k)
+        i0 = int(sh["start"] * SR)
+        seg = seg[:max(0, n - i0)]
+        out[i0:i0 + len(seg)] += seg
+        used = True
+    return out if used else None
+
+
 def write_wav(path, stereo):
     x16 = (np.clip(stereo, -1, 1) * 32767).astype(np.int16)
     with wave.open(path, "wb") as w:
@@ -228,8 +263,11 @@ def mix(cut, renderer=None):
         sfx = sfx / peak * 0.89 * float(A.get("gain", 1.0))
     outs = {"sfx": cut.out(f"{cut.name}-sfx.wav")}
     write_wav(outs["sfx"], sfx)
-    if A.get("vo"):
-        vo = read_audio(A["vo"], cut.duration)[:n]
+    vo = read_audio(A["vo"], cut.duration)[:n] if A.get("vo") else None
+    dia = dialog_track(cut, n)
+    if dia is not None:
+        vo = dia if vo is None else vo + dia
+    if vo is not None:
         win = int(0.03 * SR)
         rms = np.sqrt(np.convolve(vo ** 2, np.ones(win) / win, "same"))
         speak = np.clip(rms / 0.02, 0, 1)
@@ -242,7 +280,7 @@ def mix(cut, renderer=None):
             print("[launchcut] mix scaled to avoid clipping (VO and SFX together)")
         outs["mix"] = cut.out(f"{cut.name}-mix.wav")
         write_wav(outs["mix"], m)
-        outs["vo"] = cut.out(f"{cut.name}-vo.wav")
+        outs["vo"] = cut.out(f"{cut.name}-voice.wav")
         write_wav(outs["vo"], np.stack([vo, vo], 1))
     else:
         outs["mix"] = outs["sfx"]

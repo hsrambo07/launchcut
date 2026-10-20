@@ -38,11 +38,13 @@ DEFAULTS = {
         "open_hit": False,          # impact on frame 0
         "beat": None,               # {bpm, from, to} pulse bed, kick on beats, hats on off-beats
         "vo": None,                 # path to narration; never altered, SFX ducked under it
+        "dialog": False,            # true: every video shot plays its own recorded sound (talking heads)
         "duck_db": 8,
         "cues": [],                 # manual cues: {t, sound, gain, pan, d}
         "seed": 7,
     },
     "allow_dark_frames": False,
+    "subtitles": None,              # {transcript, words, gap, y, size, mode, emphasis, upper, hide_punct, hold, max_width}
 }
 
 REQUIRED_SHOT = {"ui": ["source", "duration"], "image": ["source", "duration"], "card": ["duration", "lines"], "end": ["duration"]}
