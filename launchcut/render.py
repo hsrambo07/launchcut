@@ -167,6 +167,8 @@ class Renderer:
         if cur is None:
             return
         j, ch = cur
+        if float(cfg.get("band", 0)) > 0:                      # darken behind subtitles on light or busy footage
+            img *= (1 - self.band / float(self.cut.style["caption"]["band"]) * float(cfg["band"]))
         size = float(cfg.get("size", 80)) * k
         f = self.font(cfg.get("font", "display"), cfg.get("size", 80))
         emph = {re.sub(r"[^a-z0-9']", "", e.lower()) for e in cfg.get("emphasis", [])}

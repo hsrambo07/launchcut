@@ -63,6 +63,7 @@ subtitles:                       # word-synced subtitles from `launchcut transcr
   hide_punct: true
   hold: 0.5                      # how long the last chunk stays after its final word
   max_width: 0.84
+  band: 0.0                      # 0..1 dark gradient behind subtitles; use 0.5 to 0.7 over light UIs
   fix: {Intelligence: Entelligence}   # correct names the transcript got wrong (also try transcribe --prompt)
 # audio.dialog: true plays each video shot's own sound (src speed must be 1); shots can override with sound: source | mute
 # shots can turn subtitles off with subtitles: false (end cards never show them)
