@@ -69,12 +69,22 @@ def qa(cut, main, muted=None):
             continue
         cam, u = r.cam(sh), r.upf[sh["source"]]
         for t in np.linspace(0, sh["duration"] - 1e-3, 24):
-            m = cam(float(t))[2] / u
+            m = cam(float(t))[2] / (1.25 if u > 1 else 1.0)   # original source pixels; enhance buys about 25%
             if m > worst:
                 worst, where = m, f"{sh['id']} @ {t:.1f}s"
     if worst:
-        enhance_hint = "" if worst <= 3.0 else " (set `enhance: 2` on the source or frame wider)"
-        rows.append(f"| {'PASS' if worst <= 3.0 else 'WARN'} | source magnification | {worst:.2f}x at {where}{enhance_hint} |")
+        # lossy sources (YouTube/WhatsApp downloads) hold text to about 2x; clean captures to about 3x
+        from .media import ffprobe
+        limit = 3.0
+        for name, path in cut.sources.items():
+            j = probe_json(path)
+            v = next((x for x in j["streams"] if x["codec_type"] == "video"), {})
+            num, den = (v.get("r_frame_rate") or "30/1").split("/")
+            bpp = float(v.get("bit_rate") or j["format"].get("bit_rate") or 0) / max(1, int(v.get("width", 1)) * int(v.get("height", 1)) * float(num) / float(den or 1))
+            if bpp and bpp < 0.1:
+                limit = 2.0
+        rows.append(f"| {'PASS' if worst <= limit else 'WARN'} | source magnification | {worst:.2f}x at {where} "
+                    f"(limit {limit:.0f}x for this source){'' if worst <= limit else '; frame wider, enhance, or re-set the text as a label'} |")
     blacks = black_segments(main)
     gate("no black frames", cut.cfg.get("allow_dark_frames") or not blacks, f"{len(blacks)} black segments")
     f0 = frame_at(main, 0.0)
@@ -106,12 +116,44 @@ def qa(cut, main, muted=None):
     for p in phone:
         os.remove(p)
 
+    # cut-boundary sheet: frames either side of every cut plus the audio waveform across the join (clipped words show
+    # up as a waveform that is mid-syllable at the cut line)
+    try:
+        cuts_t = [sh["start"] for sh in cut.shots[1:]]
+        if cuts_t:
+            raw = subprocess.run(["ffmpeg", "-v", "error", "-i", main, "-ac", "1", "-ar", "8000", "-f", "s16le", "-"],
+                                 capture_output=True).stdout
+            wav = np.frombuffer(raw, np.int16).astype(np.float32) / 32768 if raw else np.zeros(1)
+            rows_img = []
+            for ct in cuts_t:
+                tiles = []
+                for off in (-0.4, -0.12, 0.05, 0.35):
+                    f = frame_at(main, max(0.0, ct + off))
+                    tiles.append(cv2.resize(f, (256, int(256 * cut.H / cut.W)), interpolation=cv2.INTER_AREA))
+                strip = np.hstack(tiles)
+                wh = 70
+                wf = np.full((wh, strip.shape[1], 3), 255, np.uint8)
+                i0, i1 = int((ct - 0.6) * 8000), int((ct + 0.6) * 8000)
+                seg_ = wav[max(0, i0):max(0, i1)]
+                if len(seg_):
+                    cols = np.array_split(np.abs(seg_), strip.shape[1])
+                    for x, c in enumerate(cols):
+                        v = int(min(1.0, (c.max() if len(c) else 0) * 2.5) * (wh / 2 - 2))
+                        cv2.line(wf, (x, wh // 2 - v), (x, wh // 2 + v), (90, 90, 90), 1)
+                cx = strip.shape[1] // 2
+                cv2.line(wf, (cx, 0), (cx, wh), (40, 40, 230), 2)
+                cv2.putText(wf, f"cut at {ct:.2f}s", (6, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (40, 40, 230), 1, cv2.LINE_AA)
+                rows_img.append(np.vstack([strip, wf, np.full((6, strip.shape[1], 3), 255, np.uint8)]))
+            cv2.imwrite(os.path.join(d, "cuts.png"), np.vstack(rows_img))
+    except Exception as e:  # the sheet is a review aid; never fail QA on it
+        print(f"[launchcut] cut sheet skipped: {e}")
+
     rep = os.path.join(d, "report.md")
     with open(rep, "w") as f:
         f.write(f"# QA: {cut.name}\n\nFile: `{main}`\n\n## Technical gates\n\n| result | gate | detail |\n|---|---|---|\n")
         f.write("\n".join(rows) + "\n\n")
         f.write("## Editorial gates (a reviewer who did not build the cut ticks these)\n\n"
-                "Open `strip-5fps.png`, `phone-width.png` and `thumbnail-frame0.png`, then watch the file once muted and once with sound.\n\n"
+                "Open `strip-5fps.png`, `phone-width.png`, `cuts.png` (every join, with the waveform) and `thumbnail-frame0.png`, then watch the file once muted and once with sound.\n\n"
                 "- [ ] Frame 0 shows the thing we are launching and works as the post thumbnail\n"
                 "- [ ] Muted, at phone width, a first-time viewer can say what each beat showed\n"
                 "- [ ] Every caption names something that is on screen at that moment\n"

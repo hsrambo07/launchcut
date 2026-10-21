@@ -1,0 +1,126 @@
+# Granola promo cut from a 640x360 tutorial segment. Script: SCRIPT.md. Plan: PLAN.md.
+# Coordinates are source pixels (640x360); shot times are seconds from the start of the shot.
+name: granola-promo-v1
+
+output:
+  preset: twitter-16x9
+  size: [1280, 720]                  # source is 360 px tall; 720p keeps the upscale honest
+
+sources:
+  main: "~/Downloads/Granola AI Tutorial for Beginners_206_291.mp4"
+
+style:
+  palette: {bg: "#141414", text: "#F7F7F2", accent: "#9BD14A", alert: "#E5674E", muted: "#A5A5A5"}
+  vignette: 0.12
+  grain: 0.8
+  enter: {type: punch, d: 0.25, from: 0.7}   # a soft landing on every cut
+  exit: {type: none}
+  ring: {width: 3.0, glow: 0.3, pad: 5, radius: 8}
+
+audio:
+  dialog: true                       # the narrator, cut for cut, untouched
+  gain: 0.35
+  open_hit: true
+
+subtitles:
+  transcript: probe/Granola_AI_Tutorial_for_Beginners_206_291/transcript.json
+  size: 76
+  y: 930
+  words: 3
+  emphasis: [granola, notes, "12", sea, salt, september, 15th, "30", black, gray, elizabeth, transcript]
+  fix: {granola: Granola}
+  band: 1.0
+
+shots:
+  - id: builds                       # cold open on the differentiator
+    type: ui
+    source: main
+    duration: 2.85
+    src: {start: 54.55, speed: 1}
+    camera:
+      - {t: 0.0, frame: [100, 20, 560, 330]}
+      - {t: 2.85, frame: [115, 40, 545, 320], ease: linear}
+
+  - id: how
+    type: ui
+    source: main
+    duration: 7.7
+    src: {start: 15.70, speed: 1}
+    camera:
+      - {t: 0.0, frame: [100, 20, 560, 340]}
+      - {t: 7.7, frame: [110, 25, 500, 250], ease: inOutSine}
+
+  - id: decisions
+    type: ui
+    source: main
+    duration: 10.2
+    src: {start: 23.85, speed: 1}
+    camera:
+      - {t: 0.0, frame: [110, 150, 510, 225]}
+      - {t: 7.3, frame: [110, 150, 510, 225]}
+      - {t: 7.95, frame: [110, 235, 510, 300], ease: inOutCubic}
+    rings:
+      - {box: [138, 168, 480, 196], at: 2.09, color: "#2E6B1F"}     # 12 chocolate chips
+      - {box: [138, 200, 470, 213], at: 5.07, color: "#2E6B1F"}     # sea salt
+      - {box: [138, 262, 312, 276], at: 7.83, color: "#2E6B1F"}     # September 15th
+
+  - id: record
+    type: ui
+    source: main
+    duration: 1.95
+    src: {start: 36.90, speed: 1}
+    camera: [{t: 0.0, frame: [110, 140, 510, 300]}]
+    kicks: [{at: 1.28, amount: 0.05}]                                 # "30"
+
+  - id: yours
+    type: ui
+    source: main
+    duration: 7.55
+    src: {start: 46.65, speed: 1}
+    camera:
+      - {t: 0.0, frame: [110, 85, 520, 310]}
+      - {t: 7.55, frame: [118, 92, 512, 303], ease: linear}
+    rings:
+      - {box: [140, 101, 230, 115], at: 1.93, color: "#1A1A1A"}     # you wrote: Finalize the recipe
+      - {box: [140, 245, 255, 258], at: 2.25, color: "#1A1A1A"}     # you wrote: Decide on a launch date
+      - {box: [138, 118, 405, 131], at: 4.21, color: "#2E6B1F"}     # Granola added: taste test feedback
+      - {box: [150, 280, 480, 293], at: 4.55, color: "#2E6B1F"}     # Granola added: enough time for packaging
+
+  - id: who
+    type: ui
+    source: main
+    duration: 8.7
+    src: {start: 57.75, speed: 1}
+    camera:
+      - {t: 0.0, frame: [100, 20, 560, 340]}
+      - {t: 2.9, frame: [100, 20, 560, 340]}
+      - {t: 3.6, frame: [110, 170, 520, 240], ease: inOutCubic}
+    rings:
+      - {box: [138, 186, 500, 216], at: 5.11, color: "#2E6B1F"}     # Elizabeth signed up for
+      - {box: [138, 220, 470, 233], at: 7.51, color: "#2E6B1F"}     # what I signed up for
+
+  - id: receipts
+    type: ui
+    source: main
+    duration: 8.55
+    src: {start: 69.55, speed: 1}
+    camera:
+      - {t: 0.0, frame: [120, 90, 520, 240]}
+      - {t: 3.4, frame: [120, 90, 520, 240]}
+      - {t: 4.2, frame: [190, 192, 515, 312], ease: inOutCubic}
+    pulses:
+      - {point: [500, 193], at: 3.09, color: "#2E6B1F", r: 9}        # the magnifying glass
+    rings:
+      - {box: [202, 207, 505, 304], at: 5.59, color: "#2E6B1F", radius: 12}   # transcript summary
+    clicks: [3.09]
+    exit: {type: whip, d: 0.25, k: 2.0}
+
+  - id: end
+    type: end
+    duration: 2.5
+    lockup:
+      wordmark: Granola
+      font: "InterVariable@SemiBold"
+      width: 520
+      y: 400
+    command: {text: "granola.ai", prefix: "", at: 0.45}

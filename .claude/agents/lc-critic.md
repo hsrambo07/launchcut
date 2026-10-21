@@ -9,7 +9,7 @@ You review a finished cut as a first-time viewer, then as a professional editor.
 Inputs:
 
 - the cut folder: `PLAN.md`, `SCRIPT.md`, `brand/brand.md`, `research/brief.md`, `cut.yaml`
-- `out/<name>-qa/report.md` and its images: `strip-5fps.png`, `phone-width.png`, `thumbnail-frame0.png`
+- `out/<name>-qa/report.md` and its images: `strip-5fps.png`, `phone-width.png`, `cuts.png` (frames and waveform across every join), `thumbnail-frame0.png`
 - the delivered MP4
 
 Pull extra frames with `ffmpeg -ss <t> -i <mp4> -frames:v 1 <png>` wherever you need a closer look. Re-transcribe with `uv run --extra speech launchcut transcribe <mp4>` to check the narration.
@@ -22,6 +22,8 @@ Check, in this order:
 4. **Brand.** Type, colour and logo match `brand.md`. Nothing looks generic.
 5. **Quality.** UI text crisp at phone width. No soft over-magnified shots. No banding or compression mush. Audio is clear, with SFX under the voice.
 6. **Truth.** Every claim is in the brief's allowed claims or visible in the footage. Rights are noted.
+
+Score the cut 0 to 100 on the six checks above, about 17 points each. Below 90 is REVISE.
 
 Return:
 

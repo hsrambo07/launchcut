@@ -39,7 +39,39 @@ EASES = {
 }
 
 
+def _spring(u, w=9.0):
+    """critically damped spring settling at 1 (no overshoot), normalised so spring(1) == 1"""
+    f = lambda x: 1 - (1 + w * x) * math.exp(-w * x)
+    return f(u) / f(1.0)
+
+
+EASES["spring"] = _spring
+
+
+def bezier(x1, y1, x2, y2):
+    """CSS cubic-bezier(x1, y1, x2, y2) as an ease: lets a cut use the brand's own curve from its CSS"""
+    def sample(t, a, b):
+        return 3 * a * (1 - t) ** 2 * t + 3 * b * (1 - t) * t * t + t ** 3
+
+    def f(u):
+        lo, hi = 0.0, 1.0
+        for _ in range(40):                                  # solve x(t) = u by bisection
+            mid = (lo + hi) / 2
+            if sample(mid, x1, x2) < u:
+                lo = mid
+            else:
+                hi = mid
+        return sample((lo + hi) / 2, y1, y2)
+    return f
+
+
 def ease(name, u):
+    if name.startswith("bezier(") or name.startswith("cubic-bezier("):
+        key = name
+        if key not in EASES:
+            nums = [float(v) for v in name[name.index("(") + 1:name.rindex(")")].split(",")]
+            EASES[key] = bezier(*nums)
+        return EASES[key](c01(u))
     if name not in EASES:
-        raise ValueError(f"unknown ease '{name}', pick one of {sorted(EASES)}")
+        raise ValueError(f"unknown ease '{name}', pick one of {sorted(EASES)} or cubic-bezier(x1,y1,x2,y2)")
     return EASES[name](c01(u))

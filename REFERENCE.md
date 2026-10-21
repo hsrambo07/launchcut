@@ -96,6 +96,8 @@ shots: [...]                     # played in order; each shot's duration sets th
     - {box: [40, 1042, 639, 1144], at: 0.12, color: alert, pad: 4, radius: 22, until: 2.0}
   pulses:
     - {point: [1151, 787], at: 0.75, color: alert, r: 26}
+  labels:                        # the exact string from the recording, re-set crisp at native resolution next to the thing
+    - {text: "12 chocolate chips", anchor: [300, 168], side: above, at: 2.1, size: 30, fill: bg, edge: accent}
   caption: {text: "Find where it !broke.!", in: 0.2, out: 2.61, size: 78, font: display}
   clicks: [0.64]                 # SFX only: cursor clicks
   collapses: [0.7]               # SFX only: state collapses

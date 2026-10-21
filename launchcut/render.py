@@ -116,15 +116,23 @@ class Renderer:
                                   stagger=cs["stagger"], rise=cs["rise"] * self.k)
 
     # ---------------- shot types ----------------
-    def ui(self, sh, t, frames):
+    def ui(self, sh, t, frames, subs=True):
         camera = self.cam(sh)
         cam = camera(t)
+        u = self.upf[sh["source"]]
+        if cam[3] == 0 and cam[4] == 0 and cam[2] / u >= 1.5:
+            # locked hold: if the camera is not moving, snap the translation to whole screen pixels so magnified text
+            # resamples at the same phase every frame (no shimmer, far cheaper to encode)
+            nxt = camera(min(sh["duration"] - 1e-4, t + 1.0 / self.fps))
+            if abs(nxt[2] - cam[2]) / cam[2] < 0.002 and abs(nxt[0] - cam[0]) * cam[2] < 0.05 and abs(nxt[1] - cam[1]) * cam[2] < 0.05:
+                s_ = cam[2]
+                tx, ty = round(self.W / 2 - cam[0] * s_), round(self.H / 2 - cam[1] * s_)
+                cam = ((self.W / 2 - tx) / s_, (self.H / 2 - ty) / s_, s_, 0.0, 0.0)
         path = self.cut.sources[sh["source"]]
         sw, shh = self.sizes[path]
         ff, fh = frames
         M = homog(cam, sw, shh, self.W, self.H)              # source pixels -> screen
-        Mh = M @ np.diag([2.0, 2.0, 1.0])
-        u = self.upf[sh["source"]]                             # frames may be an enhanced copy, u x larger
+        Mh = M @ np.diag([2.0, 2.0, 1.0])                      # frames may be an enhanced copy, u x larger
         if cam[2] / u < 0.8:
             img = cv2.warpPerspective(fh, M @ np.diag([2.0 / u, 2.0 / u, 1.0]), (self.W, self.H), flags=cv2.INTER_AREA if self.draft else cv2.INTER_LINEAR)
         else:
@@ -142,7 +150,8 @@ class Renderer:
             img = bg * (1 - a[..., None]) + img * a[..., None]
         self.overlays(img, sh, t, M, cam)
         self.caption(img, sh, t)
-        self.subtitles(img, sh, t)
+        if subs:
+            self.subtitles(img, sh, t)
         return img
 
     # ---------------- word-synced subtitles ----------------
@@ -256,6 +265,28 @@ class Renderer:
             hh = (p[1][1] - p[0][1]) / 2 * kk + pad
             sdf_ring(img, cx, cy, hw, hh, float(r.get("radius", rs["radius"])) * self.k, self.color(r.get("color")),
                      c01((t - t0) / 0.1), th=rs["width"] * self.k, glow=rs["glow"])
+        for lb in sh.get("labels") or []:
+            t0 = float(lb["at"])
+            if t < t0 or t > float(lb.get("until", 1e9)):
+                continue
+            key = ("label", lb["text"], lb.get("size", 30))
+            if key not in self.sub_cache:
+                f = self.font(lb.get("font", "display"), lb.get("size", 30))
+                self.sub_cache[key] = text_rgba(lb["text"], f, self.color(lb.get("color", "text"))) + (f.getlength(lb["text"]),)
+            rgb, a, bl, tw = self.sub_cache[key]
+            p = to_screen(M, [tuple(lb["anchor"])])[0]
+            u_ = ease("outExpo", seg(t, t0, t0 + 0.4))
+            al = c01((t - t0) / 0.15)
+            padx, h = 16 * self.k, a.shape[0] + 6 * self.k
+            w = tw + 2 * padx
+            side = lb.get("side", "above")
+            gap = 14 * self.k
+            x = p[0] - w / 2 if side in ("above", "below") else (p[0] + gap if side == "right" else p[0] - gap - w)
+            y = p[1] - gap - h if side == "above" else (p[1] + gap if side == "below" else p[1] - h / 2)
+            y += (8 * self.k) * (1 - u_) * (1 if side == "above" else -1)
+            fill = self.color(lb.get("fill", "bg"))
+            pill(img, x, y, w, h, fill, self.color(lb.get("edge", "accent")), al, radius=h * 0.3)
+            blit(img, rgb, a, x + padx - 4, y + (h - a.shape[0]) / 2, al)
         for pu in sh.get("pulses") or []:
             t0 = float(pu["at"])
             if t < t0:
@@ -370,7 +401,8 @@ class Renderer:
             key = sh["id"] + ":tag"
             if key not in self.lines:
                 colors = {kk: self.color(kk) for kk in self.cut.palette}
-                self.lines[key] = Line(tag["text"], self.font("body", tag.get("size", 46)), {**colors, "text": self.color("muted")})
+                self.lines[key] = Line(tag["text"], self.font(tag.get("font", "body"), tag.get("size", 46)),
+                                       {**colors, "text": self.color(tag.get("color", "muted"))})
             self.lines[key].draw(img, t, float(tag.get("at", 0.92)), self.W / 2, y_final + 400 * k, stagger=0.04, rise=20 * k)
         if from_dive and t < 0.18:
             img = self.handoff(prev) * (1 - ease("outCubic", seg(t, 0, 0.18))) + img * ease("outCubic", seg(t, 0, 0.18))
@@ -380,7 +412,7 @@ class Renderer:
         """the previous shot's last frame, frozen, so the dive dissolves into the end card"""
         if prev["id"] not in self.frozen:
             te = prev["duration"] - 1e-4
-            self.frozen[prev["id"]] = self.ui(prev, te, self.reader(prev).get(self.src_time(prev, te)))
+            self.frozen[prev["id"]] = self.ui(prev, te, self.reader(prev).get(self.src_time(prev, te)), subs=False)
         return self.frozen[prev["id"]]
 
     # ---------------- frames ----------------
