@@ -17,6 +17,14 @@ class Renderer:
         st = cut.style
         self.lut = grade_lut(st["grade"])
         self.sizes = {p: source_size(p) for p in set(cut.sources.values())}
+        self.frame_src, self.upf = {}, {}                     # enhanced copies: frames are upf x the source size
+        for name, path in cut.sources.items():
+            self.frame_src[name], self.upf[name] = path, 1
+            if name in cut.enhance:
+                from .enhance import enhance
+                e = cut.enhance[name]
+                self.frame_src[name] = enhance(path, e["scale"], e["model"], e["sigma"], method=e["method"])
+                self.upf[name] = e["scale"]
         self.readers, self.cams, self.lines, self.frozen = {}, {}, {}, {}
         yy, xx = np.mgrid[0:self.H, 0:self.W].astype(np.float32)
         v = float(st["vignette"])
@@ -37,9 +45,17 @@ class Renderer:
     def color(self, c, default="accent"):
         return self.cut.color(c, default)
 
+    def font_spec(self, spec):
+        """font files may live in the cut folder (brand/fonts/...); 'path@Instance' picks a variable-font instance"""
+        name, _, var = spec.partition("@")
+        cand = os.path.join(self.cut.root, name)
+        if os.path.isfile(cand):
+            return cand + ("@" + var if var else "")
+        return spec
+
     def font(self, role, size):
         fonts = self.cut.style["fonts"]
-        return font(fonts.get(role, role), size * self.k)
+        return font(self.font_spec(fonts.get(role, role)), size * self.k)
 
     def cam(self, sh):
         if sh["id"] not in self.cams:
@@ -70,7 +86,7 @@ class Renderer:
 
     def reader(self, sh):
         if sh["id"] not in self.readers:
-            self.readers[sh["id"]] = open_source(self.cut.sources[sh["source"]], self.lut, self.fps)
+            self.readers[sh["id"]] = open_source(self.frame_src[sh["source"]], self.lut, self.fps)
         return self.readers[sh["id"]]
 
     def release_before(self, index):
@@ -106,12 +122,14 @@ class Renderer:
         path = self.cut.sources[sh["source"]]
         sw, shh = self.sizes[path]
         ff, fh = frames
-        M = homog(cam, sw, shh, self.W, self.H)
+        M = homog(cam, sw, shh, self.W, self.H)              # source pixels -> screen
         Mh = M @ np.diag([2.0, 2.0, 1.0])
-        if cam[2] < 0.8:
-            img = cv2.warpPerspective(fh, Mh, (self.W, self.H), flags=cv2.INTER_LINEAR)
+        u = self.upf[sh["source"]]                             # frames may be an enhanced copy, u x larger
+        if cam[2] / u < 0.8:
+            img = cv2.warpPerspective(fh, M @ np.diag([2.0 / u, 2.0 / u, 1.0]), (self.W, self.H), flags=cv2.INTER_AREA if self.draft else cv2.INTER_LINEAR)
         else:
-            img = cv2.warpPerspective(ff, M, (self.W, self.H), flags=cv2.INTER_LANCZOS4 if cam[2] > 1.05 and not self.draft else cv2.INTER_LINEAR)
+            img = cv2.warpPerspective(ff, M @ np.diag([1.0 / u, 1.0 / u, 1.0]), (self.W, self.H),
+                                      flags=cv2.INTER_LANCZOS4 if cam[2] / u > 1.05 and not self.draft else cv2.INTER_LINEAR)
         a = cv2.warpPerspective(self.masks[path], Mh, (self.W, self.H), flags=cv2.INTER_LINEAR).astype(np.float32) / 255
         img = img.astype(np.float32)
         if a.min() < 0.999:
@@ -187,16 +205,19 @@ class Renderer:
                 continue
             active = spoken and (i + 1 == len(ch) or ch[i + 1]["s"] > ts + 0.02)
             role = "accent" if (active and mode == "highlight") or re.sub(r"[^a-z0-9']", "", w["w"].lower()) in emph else "text"
-            key = (txt, role, int(size))
+            plate = cfg.get("style", "outline") == "plate"
+            key = (txt, role, int(size), plate)
             if key not in self.sub_cache:
-                self.sub_cache[key] = stroke_text(txt, f, self.color(role), max(2, size * 0.055)) + (f.getlength(txt),)
+                col = self.color(cfg.get("active", "accent") if role == "accent" else cfg.get("ink", "text"))
+                self.sub_cache[key] = (text_rgba(txt, f, col) if plate else stroke_text(txt, f, self.color(role), max(2, size * 0.055))) \
+                    + (f.getlength(txt),)
             words.append(self.sub_cache[key])
         if not words:
             return
         space = f.getlength(" ")
         maxw = self.W * float(cfg.get("max_width", 0.84))
         lines, line, lw = [], [], 0.0
-        pad = int(max(2, size * 0.055)) + 6
+        pad = 4 if cfg.get("style", "outline") == "plate" else int(max(2, size * 0.055)) + 6
         for wd in words:
             ww = wd[3]
             if line and lw + space + ww > maxw:
@@ -208,6 +229,11 @@ class Renderer:
         lh = size * 1.18
         u = ease("outExpo", seg(ts, ch[0]["s"] - 0.04, ch[0]["s"] + 0.16))
         rise = 14 * k * (1 - u)
+        if cfg.get("style", "outline") == "plate":                 # a soft paper plate behind ink text (light brands)
+            bw = max(lw for _, lw in lines) + size * 0.9
+            bh = len(lines) * lh + size * 0.45
+            pill(img, self.W / 2 - bw / 2, y_c - bh / 2 + rise, bw, bh, self.color(cfg.get("plate", "bg")),
+                 self.color(cfg.get("plate", "bg")) * 0.88, c01(u * 1.5) * float(cfg.get("plate_alpha", 0.94)), radius=size * 0.32)
         for li, (line, lw) in enumerate(lines):
             x = self.W / 2 - lw / 2
             base = y_c - (len(lines) - 1) * lh / 2 + li * lh + size * 0.35 + rise
@@ -281,6 +307,7 @@ class Renderer:
         lk = sh.get("lockup") or {}
         key = sh["id"] + ":lockup"
         if key not in self.lines:
+            lk = {**lk, "font": self.font_spec(lk.get("font", self.cut.style["fonts"]["display"]))}
             self.lines[key] = lockup(lk, lambda c: self.color(c, "text") if not (isinstance(c, str) and c.startswith("#")) else self.cut.color(c),
                                      self.cut.asset, k) if lk else None
         lock = self.lines[key]
@@ -320,7 +347,9 @@ class Renderer:
                 tw = f.getlength(prefix + typed)
                 pw, ph = tw + 110 * k, 108 * k
                 px, py = self.W / 2 - pw / 2, y_final + 244 * k - ph / 2 + 26 * k * (1 - pu)
-                pill(img, px, py, pw, ph, self.color("bg") * 1.55 + 2, self.color("bg") * 3.2 + 4, pa)
+                bg = self.color("bg")
+                light = float(bg.mean()) > 128
+                pill(img, px, py, pw, ph, bg * 0.94 if light else bg * 1.55 + 2, bg * 0.80 if light else bg * 3.2 + 4, pa)
                 cps = float(cmd.get("cps", 33))
                 n = int(min(len(typed), max(0, (t - at - 0.13) * cps)))
                 tx = px + 55 * k
@@ -356,6 +385,17 @@ class Renderer:
 
     # ---------------- frames ----------------
     def draw(self, sh, t, frames=None):
+        img = self._draw(sh, t, frames)
+        en = sh.get("enter") if isinstance(sh.get("enter"), dict) else ({"type": sh["enter"]} if sh.get("enter") else self.cut.style["enter"])
+        prev, _ = self.cut.neighbours(sh)
+        if en.get("type") == "dissolve" and prev is not None and prev["type"] in ("ui", "image"):
+            d = float(en.get("d", 0.25))
+            if t < d:
+                w = ease("inOutSine", seg(t, 0, d))
+                img = self.handoff(prev) * (1 - w) + img * w
+        return img
+
+    def _draw(self, sh, t, frames=None):
         if sh["type"] in ("ui", "image"):
             return self.ui(sh, t, frames)
         if sh["type"] == "card":
@@ -406,11 +446,11 @@ class Renderer:
 
     def render(self, out_path, t_from=0.0, t_to=None):
         t_to = self.cut.duration if t_to is None else t_to
-        crf = 23 if self.draft else int(self.cut.cfg["output"]["crf_master"])
+        # lossless master (FFV1, RGB): the only lossy encode happens once, at delivery
+        codec = ["-c:v", "libx264", "-preset", "ultrafast", "-crf", "23", "-pix_fmt", "yuv420p"] if self.draft else \
+                ["-c:v", "ffv1", "-level", "3", "-pix_fmt", "bgr0"]
         enc = subprocess.Popen(["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "bgr24", "-s", f"{self.W}x{self.H}",
-                                "-r", str(self.fps), "-i", "-", "-c:v", "libx264", "-preset", "ultrafast" if self.draft else "slow",
-                                "-crf", str(crf), "-pix_fmt", "yuv420p", "-profile:v", "high", "-color_primaries", "bt709",
-                                "-color_trc", "bt709", "-colorspace", "bt709", out_path], stdin=subprocess.PIPE)
+                                "-r", str(self.fps), "-i", "-"] + codec + [out_path], stdin=subprocess.PIPE)
         i0, i1 = int(round(t_from * self.fps)), int(round(t_to * self.fps))
         last = None
         try:

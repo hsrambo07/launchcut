@@ -12,3 +12,11 @@ __pycache__/
 !examples/**/assets/*.wav
 .DS_Store
 !docs/*.mp4
+docs/research/.films/
+
+# cut folders: keep the plan, script, research, brand notes and configs; never footage, renders, third-party logos or fonts
+cuts/**/*
+!cuts/**/
+!cuts/**/*.md
+!cuts/**/*.yaml
+!cuts/**/transcript.json

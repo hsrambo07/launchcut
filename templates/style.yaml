@@ -1,0 +1,5 @@
+# Placeholder. lc-art-director replaces this with the company's real design language (see brand/brand.md).
+style:
+  palette: {bg: "#111111", text: "#F5F5F5", accent: "#3B82F6", alert: "#EF4444", muted: "#A3A3A3"}
+  fonts: {display: "InterVariable@SemiBold", body: "InterVariable@Medium", mono: "Menlo"}
+  grain: 0.0

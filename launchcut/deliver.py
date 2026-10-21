@@ -10,9 +10,14 @@ def deliver(cut, picture, audio):
     o = cut.cfg["output"]
     cap = float(o["max_mbps"])
     dl = cut.out(f"{cut.name}-picture-delivery.mp4")
-    run(["ffmpeg", "-v", "error", "-y", "-i", picture, "-c:v", "libx264", "-preset", "slow", "-crf", str(o["crf_delivery"]),
-         "-maxrate", f"{cap}M", "-bufsize", f"{cap * 2}M", "-pix_fmt", "yuv420p", "-profile:v", "high", "-r", str(cut.fps),
-         "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-movflags", "+faststart", dl])
+    # the single lossy encode: explicit BT.709 matrix (old ffmpeg builds default to BT.601 and shift reds), tune animation
+    # (flat UI areas), aq-mode 3 (dark UIs), closed 2 s GOP as X and YouTube expect
+    vf = "scale=out_color_matrix=bt709:out_range=tv:flags=accurate_rnd+full_chroma_int+full_chroma_inp,format=yuv420p"
+    run(["ffmpeg", "-v", "error", "-y", "-i", picture, "-vf", vf, "-c:v", "libx264", "-preset", "slow", "-tune", "animation",
+         "-crf", str(o["crf_delivery"]), "-x264-params", "aq-mode=3", "-g", str(int(cut.fps * 2)),
+         "-maxrate", f"{cap}M", "-bufsize", f"{cap * 2}M", "-profile:v", "high", "-r", str(cut.fps),
+         "-colorspace", "bt709", "-color_primaries", "bt709", "-color_trc", "bt709", "-color_range", "tv",
+         "-movflags", "+faststart", dl])
     lufs = float(o.get("lufs", -14))
     norm = f"loudnorm=I={lufs}:TP=-1.5:LRA=11" if o.get("normalize", True) else "anull"
     outs = {}

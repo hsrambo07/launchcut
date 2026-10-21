@@ -1,0 +1,57 @@
+# Talking-head cut of VID-20260622-WA0004 (832x464, already captioned). See PLAN.md.
+name: talking-head-v1
+
+output:
+  preset: twitter-16x9
+  size: [1280, 720]              # source is 464 px tall; 720p keeps the upscale honest
+  deliver_to: "~/Desktop"
+
+sources:
+  main: "~/Downloads/VID-20260622-WA0004.mp4"
+
+style:
+  grade: {black: 8, gain: 1.07, out_black: 0}   # the clip is a little hazy
+  vignette: 0.15
+  grain: 1.2
+  enter: {type: none}            # talking head: hard cuts, no punches
+  exit: {type: none}
+
+audio:
+  dialog: true                   # her voice, cut for cut, untouched
+  gain: 0.3                      # SFX sit well under speech
+
+shots:
+  # 1. Setup: "allocate five, six engineers per project ... priority for your team."
+  - id: today
+    type: ui
+    source: main
+    duration: 4.95
+    src: {start: 0.0, speed: 1}
+    camera:
+      - {t: 0.0, zoom: 1.0}
+      - {t: 4.95, zoom: 1.07, center: [470, 232], ease: linear}   # drift toward her; burned captions stay whole
+
+  # 2. Payoff: "I think we're going to start seeing engineering leaders allocate X amount of money per project ..."
+  - id: prediction
+    type: ui
+    source: main
+    duration: 10.0
+    src: {start: 5.25, speed: 1}
+    camera:
+      - {t: 0.0, zoom: 1.0}
+      - {t: 9.7, zoom: 1.09, center: [420, 228], ease: linear}
+    kicks: [{at: 4.57, amount: 0.035}]                             # "money"
+    exit: {type: whip, d: 0.25, k: 2.0}
+
+  - id: end
+    type: end
+    duration: 2.5
+    lockup:
+      mark: ../../examples/agentplay/assets/mark.svg
+      mark_color: "#A4E42A"
+      tile: {color: "#1F2326", radius: 0.22}
+      wordmark: Entelligence
+      font: "InterVariable@SemiBold"
+      width: 760
+      y: 380
+    command: {text: "entelligence.ai", prefix: "", at: 0.45}

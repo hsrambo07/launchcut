@@ -60,6 +60,21 @@ def qa(cut, main, muted=None):
         target = float(o.get("lufs", -14))
         gate("loudness", lufs is not None and abs(lufs - target) <= 1.5, f"{lufs} LUFS (target {target})")
         gate("true peak", tp is not None and tp <= -0.9, f"{tp} dBFS")
+    # magnification: how many screen pixels each source pixel becomes (after any enhance). Above 3x UI text goes soft.
+    from .render import Renderer
+    r = Renderer(cut, draft=True)
+    worst, where = 0.0, ""
+    for sh in cut.shots:
+        if sh["type"] not in ("ui", "image"):
+            continue
+        cam, u = r.cam(sh), r.upf[sh["source"]]
+        for t in np.linspace(0, sh["duration"] - 1e-3, 24):
+            m = cam(float(t))[2] / u
+            if m > worst:
+                worst, where = m, f"{sh['id']} @ {t:.1f}s"
+    if worst:
+        enhance_hint = "" if worst <= 3.0 else " (set `enhance: 2` on the source or frame wider)"
+        rows.append(f"| {'PASS' if worst <= 3.0 else 'WARN'} | source magnification | {worst:.2f}x at {where}{enhance_hint} |")
     blacks = black_segments(main)
     gate("no black frames", cut.cfg.get("allow_dark_frames") or not blacks, f"{len(blacks)} black segments")
     f0 = frame_at(main, 0.0)

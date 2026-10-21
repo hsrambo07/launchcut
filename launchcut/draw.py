@@ -159,7 +159,10 @@ def background(W, H, color, grid=96.0, strength=9.0, scale=1.0, anchor=None):
         cv2.line(lines, (int(round(x)), 0), (int(round(x)), H), 1.0, 1, cv2.LINE_AA)
     for y in np.arange(ay % g, H, g):
         cv2.line(lines, (0, int(round(y))), (W, int(round(y))), 1.0, 1, cv2.LINE_AA)
-    img += lines[..., None] * strength
+    if float(np.mean(color)) > 128:            # light brand: grid lines are a touch darker than the paper
+        img -= lines[..., None] * strength * 0.6
+    else:
+        img += lines[..., None] * strength
     return img
 
 
@@ -173,8 +176,8 @@ def rounded_mask(w, h, r):
     return m
 
 
-def pill(dst, x, y, w, h, fill, edge, alpha):
-    m = rounded_mask(int(w), int(h), int(h / 2) - 1).astype(np.float32) / 255
+def pill(dst, x, y, w, h, fill, edge, alpha, radius=None):
+    m = rounded_mask(int(w), int(h), int(radius if radius is not None else h / 2 - 1)).astype(np.float32) / 255
     e = np.clip(m - cv2.erode(m, np.ones((5, 5), np.uint8)), 0, 1)
     f = np.empty(m.shape + (3,), np.float32)
     f[:] = fill
@@ -303,9 +306,31 @@ def image_mask(path, size):
     return rgb, a
 
 
+def logo_image(path, width):
+    """an official logo file (PNG with alpha, or a single-colour SVG) at the given width"""
+    if path.lower().endswith(".svg"):
+        ds, view = svg_paths(path)
+        vw, vh = (view[2], view[3]) if view else (1, 1)
+        h = int(round(width * vh / vw))
+        a = svg_mask(path, int(width), ss=3)
+        a = a[(a.shape[0] - h) // 2:(a.shape[0] - h) // 2 + h] if a.shape[0] > h else a
+        fill = re.search(r'fill="(#[0-9a-fA-F]{6})"', open(path).read())
+        col = np.empty(a.shape + (3,), np.float32)
+        hx = (fill.group(1) if fill else "#000000").lstrip("#")
+        col[:] = (int(hx[4:6], 16), int(hx[2:4], 16), int(hx[0:2], 16))
+        return col, a
+    im = Image.open(path).convert("RGBA")
+    h = int(round(width * im.height / im.width))
+    im = im.resize((int(width), h), Image.LANCZOS)
+    arr = np.asarray(im, np.float32)
+    return arr[..., 2::-1].copy(), arr[..., 3] / 255
+
+
 def lockup(cfg, colors, resolve, scale_ref=1.0):
-    """[tile with mark] + wordmark, rendered once at its final width. Returns rgb, alpha."""
+    """[tile with mark] + wordmark, rendered once at its final width; or the brand's own logo file via `image:`."""
     width = float(cfg.get("width", 800)) * scale_ref
+    if cfg.get("image"):
+        return logo_image(resolve(cfg["image"]), width)
     tile_h = width * 0.27                         # proportions of a typical app-header lockup
     font_spec = cfg.get("font", "InterVariable@SemiBold")
     word = cfg.get("wordmark", "")

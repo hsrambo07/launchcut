@@ -1,0 +1,30 @@
+# Granola design language (see brand/brand.md; colours VERIFIED from granola.ai CSS and press-kit logo files, Oct 2026).
+# Display and body fonts are free substitutes for their commercial faces (Quadrant Notepad -> Besley,
+# KMR Melange Grotesk -> Hanken Grotesk), both OFL, shipped in brand/fonts.
+output:
+  preset: twitter-16x9
+  size: [1280, 720]
+  fps: 30                                   # source is 29.97 fps; 60 would only duplicate frames
+
+style:
+  palette:
+    bg: "#f7f7f2"                           # Granola "paper"
+    text: "#292929"                         # ink
+    accent: "#5b6f00"                       # button green: legible on paper (signature #b2c248 is too light for text)
+    alert: "#e95d3d"
+    muted: "#72726e"
+  fonts:
+    display: "brand/fonts/HankenGrotesk[wght].ttf@SemiBold"
+    body: "brand/fonts/HankenGrotesk[wght].ttf@Medium"
+    serif: "brand/fonts/Besley[wght].ttf@Medium"
+    mono: "Menlo"
+  grade: {black: 0, gain: 1.0, out_black: 0}
+  vignette: 0.0                             # paper stays flat and clean
+  grain: 0.0
+  grid: {size: 96, strength: 0}
+  window: {radius: 20, shadow: 0.35}
+  ring: {width: 3.0, glow: 0.15, pad: 5, radius: 8}
+  caption: {size: 64, margin: 70, band: 0.0, stagger: 0.05, rise: 18, font: serif}
+  enter: {type: dissolve, d: 0.22}          # their reel cuts softly; no whip-pans
+  exit: {type: none}
+  motion_blur: {enabled: true, max_samples: 10, px_per_sample: 2.5, shutter: 0.8}

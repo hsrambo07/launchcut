@@ -18,6 +18,31 @@ Use it as a human editor, or hand it to an agent (Claude Code: `/launchcut`). Bo
 8. **Real things only.** Real logos from the brand files, numbers that appear in the recording, claims that trace to the README or the site. Never invent a metric, a logo or a feature.
 9. **Narration is sacred.** If there is a VO, its samples are never regenerated or edited. SFX duck under it, and a VO-only master ships alongside.
 10. **Prove it before you post it.** Stills sheet before the full render. Technical QA and an editorial review by someone who did not build the cut. Versions are never overwritten.
+11. **Learn the company before directing.** Every job researches the product, its own claims and its design language first. Nothing carries over from another company's cut: not the palette, not the fonts, not the end card.
+12. **Quality is a gate, not a hope.**
+    - Sources below 720p get `enhance: 2`.
+    - Grain stays off on UI footage.
+    - No shot magnifies source pixels past 3x; the QA report warns if one does.
+
+---
+
+## 0b. The crew
+
+One job, five roles. They are defined as Claude Code subagents in `.claude/agents/`; a human team can play the same roles. The producer, a person or `/launchcut`, runs them in this order and edits.
+
+| Role | Learns or decides | Writes | Gate before the next role |
+|---|---|---|---|
+| `lc-researcher` | The product, its verbatim claims, audience pains, competitor framing, posting context, rights | `research/brief.md` | Every claim has a URL; context stated |
+| `lc-art-director` | The company's own palette, type, logo files, UI framing, motion and sound character; later approves stills | `brand/brand.md`, `style.yaml` | Every value VERIFIED or ASSUMED; logo from official files |
+| `lc-hook-writer` | 12 or more openings across patterns, scored on the rubric in `docs/research/launch-craft.md` | `research/hooks.md` | Top 3 picked with trade-offs |
+| `lc-director` | Structure template, beat map, script, shot list, pacing budget | `SCRIPT.md`, `PLAN.md` | Beats teach one thing each; budget adds up |
+| producer (you) | Coordinates, `cut.yaml`, stills loop, render | `cut.yaml`, `out/` | Art director approves stills; QA passes |
+| `lc-critic` | An independent review of the delivered file | Review log in `PLAN.md` | PASS, or at most three REVISE loops |
+
+The craft knowledge the roles share lives in:
+
+- `docs/research/launch-craft.md`: principles, structure templates, the hook library and the scoring rubric.
+- `docs/research/prior-art.md`: techniques taken from other tools, and the quality settings.
 
 ---
 

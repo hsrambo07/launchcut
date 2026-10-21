@@ -10,6 +10,30 @@
 recordings + context ──▶ probe ──▶ PLAN.md (beats, shots, pacing) ──▶ cut.yaml ──▶ stills loop ──▶ render + sfx + deliver ──▶ qa
 ```
 
+## How it works: a crew, not a template
+
+Every job runs the same crew, defined as Claude Code subagents in `.claude/agents/` (a human team can play the same roles):
+
+| Role | Does | Writes |
+|---|---|---|
+| `lc-researcher` | Learns the product, its verbatim claims, audience pains, competitor framing, the posting context, rights | `research/brief.md` |
+| `lc-art-director` | Learns the company's own design language from its site CSS, logo files and marketing videos; later approves stills | `brand/brand.md`, `style.yaml` |
+| `lc-hook-writer` | Writes and scores 12+ openings against a researched hook library and rubric | `research/hooks.md` |
+| `lc-director` | Picks a structure, writes the two-column script, beat map, shot list and pacing budget | `SCRIPT.md`, `PLAN.md` |
+| producer | Locks coordinates, writes `cut.yaml`, runs the stills loop and the render | `cut.yaml`, `out/` |
+| `lc-critic` | Reviews the delivered file blind against plan, brand and craft; PASS or REVISE with five fixes | review log |
+
+Nothing is tied to one brand: each cut learns its own. The shared craft knowledge is researched and cited in `docs/research/launch-craft.md` (ten launch films analysed frame by frame, structures, a hook library and a scoring rubric) and `docs/research/prior-art.md` (35 related tools reverse-engineered, measured quality settings).
+
+## Quality
+
+Measured, not guessed (`docs/research/prior-art.md`):
+
+- **Low-res sources** get `enhance: 2`, a deterministic Catmull-Rom 2x with a luma sharpen, done once and cached. Camera moves then only downsample. GAN upscalers are opt-in and guarded by a round-trip check, because they rewrite letters.
+- **Masters are lossless** (FFV1). The single delivery encode uses x264 `tune animation` and `aq-mode 3`, an explicit BT.709 matrix and a closed 2 s GOP.
+- **Grain is off** for UI footage.
+- **The QA report warns** when a shot magnifies source pixels past 3x.
+
 ## Why
 
 Screen recordings are long, small and silent. A good launch clip has to:

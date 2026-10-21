@@ -2,17 +2,14 @@
 # Coordinates are source pixels (lock them with `launchcut grid`). Shot times are seconds from the shot's start.
 
 name: my-cut
-# extends: ../style.yaml          # share brand style across cuts
+extends: style.yaml               # the brand's look, written by lc-art-director from the company's own site and files
 
 output:
   preset: twitter-16x9
 
 sources:
   main: "recordings/main.mov"
-
-style:
-  palette: {bg: "#141415", text: "#F2F2F0", accent: "#A4E42A", alert: "#F26858", muted: "#A5A5A5"}
-  grade: {black: 20, gain: 1.18, out_black: 18}   # dark-mode UI lift; set gain: 1 to leave the recording untouched
+  # main: {path: "recordings/main.mov", enhance: 2}   # below 720p: super-resolve once (cached) so UI text stays crisp
 
 audio:
   open_hit: true

@@ -60,6 +60,8 @@ class ShotCamera:
             self.kfs.append(k)
         self.kfs.sort(key=lambda k: k["t"])
         self.enter = parse_move(shot.get("enter"), style["enter"], is_first)
+        if self.enter.get("type") == "dissolve":
+            self.enter = {"type": "none"}
         self.exit = parse_move(shot.get("exit"), style["exit"], is_last)
         self.kicks = shot.get("kicks") or []
         tilted = any(k["rx"] or k["ry"] for k in self.kfs)

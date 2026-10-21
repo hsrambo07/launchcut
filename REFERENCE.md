@@ -14,12 +14,12 @@ output:
   # lufs: -14                    # loudness target
   dir: out                       # relative to this file
   deliver_to: null               # optional folder that receives a copy of the masters
-  crf_master: 15
-  crf_delivery: 18
+  crf_delivery: 16              # the only lossy encode (master is lossless FFV1); x264 tune animation, aq-mode 3, BT.709
   normalize: true                # loudness-normalise delivered audio
 
 sources:                         # any number; images work too (png, jpg, webp)
   main: "~/Desktop/Screen Recording 2026-10-14 at 9.57.23*PM.mov"   # globs allowed
+  lowres: {path: recordings/tutorial-360p.mp4, enhance: 2}          # below 720p: upscale once, cached (method: sharp | esrgan)
   settings: recordings/settings.mov
   diagram: assets/architecture.png
 
@@ -34,7 +34,7 @@ style:                           # see RULES.md section 4 for what each knob doe
   caption: {size: 78, margin: 74, band: 0.82, stagger: 0.05, rise: 30, font: display}
   ring: {width: 3.0, glow: 0.45, pad: 8, radius: 16}
   motion_blur: {enabled: true, max_samples: 14, px_per_sample: 2.5, shutter: 1.0}
-  enter: {type: punch, d: 0.3, from: 0.5}     # default entry for every shot but the first
+  enter: {type: punch, d: 0.3, from: 0.5}     # default entry for every shot but the first; or {type: dissolve, d: 0.22}
   exit: {type: whip, d: 0.18, k: 2.0}         # default exit for every shot but the last
 
 audio:
@@ -63,7 +63,9 @@ subtitles:                       # word-synced subtitles from `launchcut transcr
   hide_punct: true
   hold: 0.5                      # how long the last chunk stays after its final word
   max_width: 0.84
-  band: 0.0                      # 0..1 dark gradient behind subtitles; use 0.5 to 0.7 over light UIs
+  band: 0.0                      # 0..1 dark gradient behind subtitles (outline style)
+  style: outline                 # outline (white + dark stroke) | plate (ink text on a soft paper plate, for light brands)
+  active: accent                 # colour of the word being spoken; ink: text; plate: bg; plate_alpha: 0.94
   fix: {Intelligence: Entelligence}   # correct names the transcript got wrong (also try transcribe --prompt)
 # audio.dialog: true plays each video shot's own sound (src speed must be 1); shots can override with sound: source | mute
 # shots can turn subtitles off with subtitles: false (end cards never show them)
@@ -125,6 +127,7 @@ Caption markup: `*accent words*`, `!alert words!`. Markers can span several word
   type: end
   duration: 2.75
   lockup:
+    image: brand/logos/lockup_black.png   # the brand's own logo file (PNG with alpha or single-colour SVG); overrides the parts below
     mark: assets/mark.svg        # svg (recoloured with mark_color) or png (kept as is)
     mark_color: "#C4DE96"
     tile: {color: "#2C343A", radius: 0.22}   # omit for a bare mark

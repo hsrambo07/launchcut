@@ -3,6 +3,7 @@
   new      scaffold a cut folder (cut.yaml + PLAN.md) from the templates
   probe    inventory a recording: specs, audio, contact sheets, motion spikes
   grid     full-res frame with a coordinate grid, to lock boxes and points
+  enhance  super-resolve a low-res source (Real-ESRGAN + detail transfer), cached
   transcribe  word-timed transcript + sentences, pauses, fillers, soundbites (needs --extra speech)
   stills   render chosen moments of a cut to PNGs + a sheet (fast review loop)
   render   render the picture master (add --draft for a quick pass)
@@ -23,7 +24,7 @@ def _cut(path):
 
 def cmd_new(a):
     os.makedirs(a.dir, exist_ok=True)
-    for f in ("cut.yaml", "PLAN.md"):
+    for f in ("cut.yaml", "PLAN.md", "style.yaml"):
         dst = os.path.join(a.dir, f)
         if os.path.exists(dst):
             print(f"skip {dst} (exists)")
@@ -48,6 +49,12 @@ def cmd_transcribe(a):
         print(f"{p}\n  -> {md}\n  -> {js}")
 
 
+def cmd_enhance(a):
+    from .enhance import enhance
+    for p in a.clips:
+        print(enhance(os.path.expanduser(p), a.scale, a.model, a.sigma))
+
+
 def cmd_grid(a):
     from .probe import grid
     print(grid(os.path.expanduser(a.recording), a.t, a.box, a.step, a.out))
@@ -64,7 +71,7 @@ def cmd_stills(a):
 def cmd_render(a):
     from .render import Renderer
     cut = _cut(a.cut)
-    out = cut.out(f"{cut.name}-picture{'-draft' if a.draft else ''}.mp4")
+    out = cut.out(f"{cut.name}-picture-draft.mp4" if a.draft else f"{cut.name}-picture.mkv")
     t = time.time()
     print(f"rendering {cut.name}: {len(cut.shots)} shots, {cut.duration:.2f}s, {cut.W}x{cut.H}@{cut.fps}")
     Renderer(cut, draft=a.draft).render(out, a.t_from, a.t_to)
@@ -87,7 +94,7 @@ def cmd_deliver(a):
     from .render import Renderer
     from .sfx import mix
     cut = _cut(a.cut)
-    pic = cut.out(f"{cut.name}-picture.mp4")
+    pic = cut.out(f"{cut.name}-picture.mkv")
     if not os.path.exists(pic):
         sys.exit(f"no picture master at {pic}; run `launchcut render` first")
     audio = mix(cut, Renderer(cut, draft=True))
@@ -127,6 +134,8 @@ def main(argv=None):
     s = sub.add_parser("transcribe"); s.add_argument("clips", nargs="+"); s.add_argument("--out", default="probe")
     s.add_argument("--model", default="small.en", help="faster-whisper model: tiny.en base.en small.en medium.en large-v3")
     s.add_argument("--prompt", help="names and jargon to expect, e.g. 'Entelligence, AgentPlay'"); s.set_defaults(fn=cmd_transcribe)
+    s = sub.add_parser("enhance"); s.add_argument("clips", nargs="+"); s.add_argument("--scale", type=int, default=2)
+    s.add_argument("--model", default="realesr-animevideov3"); s.add_argument("--sigma", type=float, default=1.2); s.set_defaults(fn=cmd_enhance)
     s = sub.add_parser("grid"); s.add_argument("recording"); s.add_argument("t", type=float)
     s.add_argument("--box", nargs=4, type=int, metavar=("X0", "Y0", "X1", "Y1")); s.add_argument("--step", type=int, default=100)
     s.add_argument("--out"); s.set_defaults(fn=cmd_grid)

@@ -16,14 +16,15 @@ PRESETS = {
 
 DEFAULTS = {
     "name": "cut",
-    "output": {"preset": "twitter-16x9", "dir": "out", "deliver_to": None, "crf_master": 15, "crf_delivery": 18},
+    "output": {"preset": "twitter-16x9", "dir": "out", "deliver_to": None, "crf_delivery": 16},
     "sources": {},
     "style": {
-        "palette": {"bg": "#141415", "text": "#F2F2F0", "accent": "#A4E42A", "alert": "#F26858", "muted": "#A5A5A5"},
-        "fonts": {"display": "Geist-SemiBold", "body": "Geist-Medium", "mono": "GeistMono-Medium"},
+        # neutral on purpose: every brand's look comes from its own style.yaml (written by the art director)
+        "palette": {"bg": "#111111", "text": "#F5F5F5", "accent": "#3B82F6", "alert": "#EF4444", "muted": "#A3A3A3"},
+        "fonts": {"display": "InterVariable@SemiBold", "body": "InterVariable@Medium", "mono": "Menlo"},
         "grade": {"black": 0, "gain": 1.0, "out_black": 0},   # out = (in - black) * gain + out_black on recording pixels
-        "vignette": 0.22,
-        "grain": 2.2,
+        "vignette": 0.12,
+        "grain": 0.0,                                          # film grain muddies UI text; add it only for cinematic footage
         "grid": {"size": 96, "strength": 9},                 # background grid seen around the window; strength 0 = off
         "window": {"radius": 24, "shadow": 0.6},             # rounded recording edge + drop shadow when zoom < 1
         "caption": {"size": 78, "margin": 74, "band": 0.82, "stagger": 0.05, "rise": 30, "font": "display"},
@@ -96,7 +97,15 @@ class Cut:
         self.audio = cfg["audio"]
         self.out_dir = resolve_path(cfg["output"]["dir"], self.root)
         self.deliver_to = os.path.expanduser(cfg["output"]["deliver_to"]) if cfg["output"].get("deliver_to") else None
-        self.sources = {k: resolve_path(v, self.root) for k, v in cfg["sources"].items()}
+        self.sources, self.enhance = {}, {}
+        for k, v in cfg["sources"].items():
+            if isinstance(v, dict):                     # {path, enhance: 2, model, sigma}: super-resolve a low-res source
+                self.sources[k] = resolve_path(v["path"], self.root)
+                if v.get("enhance"):
+                    self.enhance[k] = {"scale": int(v["enhance"]), "model": v.get("model", "realesr-animevideov3"),
+                                       "sigma": float(v.get("sigma", 1.2)), "method": v.get("method", "sharp")}
+            else:
+                self.sources[k] = resolve_path(v, self.root)
         if self.audio.get("vo"):
             self.audio["vo"] = resolve_path(self.audio["vo"], self.root)
         self.shots = []

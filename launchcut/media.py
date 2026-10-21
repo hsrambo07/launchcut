@@ -12,6 +12,12 @@ def ffprobe(path):
     a = next((s for s in j["streams"] if s["codec_type"] == "audio"), None)
     info = {"duration": float(j["format"].get("duration", 0)), "has_audio": a is not None}
     if v:
+        cs = v.get("color_space", "unknown")
+        # untagged HD is almost always BT.709; untagged SD is BT.601. Never let the decoder guess.
+        info["matrix"] = "bt709" if cs == "bt709" or (cs in ("unknown", "", None) and int(v.get("height", 0)) >= 720) else \
+                         ("bt601" if cs in ("smpte170m", "bt470bg", "unknown", "", None) else cs)
+        info["range"] = "pc" if v.get("color_range") == "pc" else "tv"
+    if v:
         num, den = (v.get("r_frame_rate") or "0/1").split("/")
         info.update(width=int(v["width"]), height=int(v["height"]), codec=v.get("codec_name"),
                     fps=float(num) / float(den or 1), nb_frames=int(v.get("nb_frames") or 0))
@@ -32,6 +38,8 @@ class VideoSource:
         self.path, self.lut, self.fps = path, lut, fps
         info = ffprobe(path)
         self.w, self.h, self.duration = info["width"], info["height"], info["duration"]
+        self.vf = (f"fps={fps},scale=in_color_matrix={info.get('matrix', 'bt709')}:in_range={info.get('range', 'tv')}"
+                   ":flags=accurate_rnd+full_chroma_int")
         self.proc = None
         self.start = None
         self.idx = -1
@@ -40,7 +48,7 @@ class VideoSource:
     def _open(self, start):
         self.close()
         start = max(0.0, start)
-        cmd = ["ffmpeg", "-v", "error", "-ss", f"{start:.4f}", "-i", self.path, "-vf", f"fps={self.fps}",   # fps filter: VFR to CFR
+        cmd = ["ffmpeg", "-v", "error", "-ss", f"{start:.4f}", "-i", self.path, "-vf", self.vf,   # fps: VFR to CFR; explicit matrix
                "-f", "rawvideo", "-pix_fmt", "bgr24", "-"]
         self.proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=self.w * self.h * 3)
         self.start, self.idx, self.frame, self.half = start, -1, None, None
