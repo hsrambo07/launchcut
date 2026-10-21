@@ -162,8 +162,10 @@ class Renderer:
         cfg = self.subs
         s0, s1 = self.src_time(sh, 0.0), self.src_time(sh, sh["duration"])
         ws = []
+        skips = cfg.get("skip") or []                     # source-time ranges never subtitled (stray words, mishears)
         for w in self.sub_words:
-            if not (s0 <= (w["s"] + w["e"]) / 2 <= s1):
+            mid = (w["s"] + w["e"]) / 2
+            if not (s0 <= mid <= s1) or any(a <= mid <= b for a, b in skips):
                 continue
             if ws and re.match(r"^[-'’]", w["w"]):          # whisper splits "self -improving", "don 't": glue back
                 ws[-1] = {**ws[-1], "w": ws[-1]["w"] + w["w"], "e": w["e"]}

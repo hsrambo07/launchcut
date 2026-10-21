@@ -30,6 +30,7 @@ subtitles:
   hold: 0.4
   active: text                   # calm: no word-by-word colour jumps (art director)
   fix: {granola: Granola}
+  skip: [[83.60, 84.10]]                         # stray transcribed "is." (silent in the cut)
 
 shots:
   - id: poster                                   # H2 result first: the finished note, labelled, is frame 0
@@ -41,8 +42,8 @@ shots:
     subtitles: false
     camera: [{t: 0, frame: [83, 25, 595, 313], pad: 0}]
     labels:
-      - {text: "What I wrote", anchor: [229, 108], side: right, at: -0.6, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
-      - {text: "Granola generated", anchor: [406, 125], side: right, at: -0.6, size: 50, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
+      - {text: "What I wrote", anchor: [229, 107], side: right, at: -0.6, size: 64, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
+      - {text: "Granola generated", anchor: [406, 125], side: right, at: -0.6, size: 64, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
 
   - id: builds                                   # "Instead of replacing my notes, it builds on them."
     type: ui
@@ -52,8 +53,8 @@ shots:
     enter: none
     camera: [{t: 0, frame: [83, 25, 595, 313], pad: 0}]
     labels:
-      - {text: "What I wrote", anchor: [229, 108], side: right, at: -1, until: 2.88, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
-      - {text: "Granola generated", anchor: [406, 125], side: right, at: -1, until: 2.88, size: 50, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
+      - {text: "What I wrote", anchor: [229, 107], side: right, at: -1, until: 2.88, size: 64, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
+      - {text: "Granola generated", anchor: [406, 125], side: right, at: -1, until: 2.88, size: 64, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
 
   - id: context                                  # "If I want more context about something,"
     type: ui
@@ -95,13 +96,13 @@ shots:
   - id: yours                                    # "If I want to make any edits to these notes, here I could click in and type in my changes."
     type: ui
     source: main
-    duration: 4.74
+    duration: 4.96                                  # critic pass 2: "changes." is voiced to 83.76, its "z" to 83.90
     src: {start: 79.00, speed: 1}
     camera: [{t: 0, frame: [66, 58, 578, 346], pad: 0}]
     rings: [{box: [153, 141, 380, 157], at: 1.14}]
     labels:
       - {text: "What I wrote", anchor: [323, 157], side: below, at: 3.20, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}   # the edited line is yours again
-      - {text: "Footage and voice: Kevin Stratvert, Granola-sponsored tutorial", anchor: [322, 64], side: over, at: 0.3, size: 28, fill: bg, color: muted, edge: bg}
+      - {text: "Footage and voice: Kevin Stratvert, Granola-sponsored tutorial", anchor: [322, 66], side: over, at: 0.3, size: 40, fill: bg, color: muted, edge: bg}
     clicks: [1.90]
 
   - id: end

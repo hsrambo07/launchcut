@@ -66,6 +66,7 @@ subtitles:                       # word-synced subtitles from `launchcut transcr
   band: 0.0                      # 0..1 dark gradient behind subtitles (outline style)
   style: outline                 # outline (white + dark stroke) | plate (ink text on a soft paper plate, for light brands)
   active: accent                 # colour of the word being spoken; ink: text; plate: bg; plate_alpha: 0.94
+  skip: [[83.6, 84.1]]           # source-time ranges to leave unsubtitled (stray words, mishears)
   fix: {Intelligence: Entelligence}   # correct names the transcript got wrong (also try transcribe --prompt)
 # audio.dialog: true plays each video shot's own sound (src speed must be 1); shots can override with sound: source | mute
 # shots can turn subtitles off with subtitles: false (end cards never show them)

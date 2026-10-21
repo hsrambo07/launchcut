@@ -9,13 +9,13 @@ File: `/Users/harshsinghal/Documents/projects/launchcut/cuts/granola-promo-v1/ou
 | PASS | codec | h264 yuv420p |
 | PASS | size | 1280x720 (preset 1280x720) |
 | PASS | frame rate | 30 fps |
-| PASS | duration | 23.433s (cut 23.440s) |
+| PASS | duration | 23.667s (cut 23.660s) |
 | PASS | bitrate | 1.0 Mbps overall (cap 18 video) |
-| PASS | loudness | -14.7 LUFS (target -14.0) |
+| PASS | loudness | -14.8 LUFS (target -14.0) |
 | PASS | true peak | -1.4 dBFS |
 | PASS | source magnification | 2.00x at poster @ 0.0s (limit 2x for this source) |
 | PASS | no black frames | 0 black segments |
-| PASS | frame 0 reads as a thumbnail | mean luma 236, contrast 33 |
+| PASS | frame 0 reads as a thumbnail | mean luma 234, contrast 37 |
 
 ## Editorial gates (a reviewer who did not build the cut ticks these)
 

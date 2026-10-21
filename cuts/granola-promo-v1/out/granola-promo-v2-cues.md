@@ -15,6 +15,6 @@ Every cue is tied to something on screen. Times are seconds in the cut.
 |  18.20 | ideally by Tuesday appears in the line |
 |  18.26 | ideally by Tuesday appears in the line |
 |  18.32 | ideally by Tuesday appears in the line |
-|  20.09 | end: lockup |
-|  20.59 | end: tagline |
-|  21.22 | end: command typed |
+|  20.31 | end: lockup |
+|  20.81 | end: tagline |
+|  21.44 | end: command typed |
