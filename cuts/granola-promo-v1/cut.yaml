@@ -1,126 +1,114 @@
-# Granola promo cut from a 640x360 tutorial segment. Script: SCRIPT.md. Plan: PLAN.md.
+# Granola promo v2 (23.44 s). Written from PLAN.md / SCRIPT.md (lc-director), hook H2 from research/hooks.md,
+# look from style.yaml (lc-art-director, verified from granola.ai). v1 is cut-v1.yaml.
 # Coordinates are source pixels (640x360); shot times are seconds from the start of the shot.
-name: granola-promo-v1
-
-output:
-  preset: twitter-16x9
-  size: [1280, 720]                  # source is 360 px tall; 720p keeps the upscale honest
+name: granola-promo-v2
+extends: style.yaml
 
 sources:
-  main: "~/Downloads/Granola AI Tutorial for Beginners_206_291.mp4"
-
-style:
-  palette: {bg: "#141414", text: "#F7F7F2", accent: "#9BD14A", alert: "#E5674E", muted: "#A5A5A5"}
-  vignette: 0.12
-  grain: 0.8
-  enter: {type: punch, d: 0.25, from: 0.7}   # a soft landing on every cut
-  exit: {type: none}
-  ring: {width: 3.0, glow: 0.3, pad: 5, radius: 8}
+  main: {path: "~/Downloads/Granola AI Tutorial for Beginners_206_291.mp4", enhance: 2}
 
 audio:
-  dialog: true                       # the narrator, cut for cut, untouched
+  dialog: true
+  sfx: true
   gain: 0.35
-  open_hit: true
+  open_hit: false
+  end_hit: false                 # calm brand: no boom under the lockup (critic)
+  cues:
+    - {t: 0.05, sound: chime, gain: 0.15, why: "labelled poster frame"}
+    - {t: 18.20, sound: key, gain: 0.25, why: "ideally by Tuesday appears in the line"}
+    - {t: 18.26, sound: key, gain: 0.25, why: "ideally by Tuesday appears in the line"}
+    - {t: 18.32, sound: key, gain: 0.25, why: "ideally by Tuesday appears in the line"}
 
 subtitles:
   transcript: probe/Granola_AI_Tutorial_for_Beginners_206_291/transcript.json
-  size: 76
-  y: 930
-  words: 3
-  emphasis: [granola, notes, "12", sea, salt, september, 15th, "30", black, gray, elizabeth, transcript]
+  style: plate
+  words: 5
+  gap: 0.3
+  mode: highlight
+  size: 54
+  y: 1030
+  hold: 0.4
+  active: text                   # calm: no word-by-word colour jumps (art director)
   fix: {granola: Granola}
-  band: 1.0
 
 shots:
-  - id: builds                       # cold open on the differentiator
+  - id: poster                                   # H2 result first: the finished note, labelled, is frame 0
     type: ui
     source: main
-    duration: 2.85
-    src: {start: 54.55, speed: 1}
-    camera:
-      - {t: 0.0, frame: [100, 20, 560, 330]}
-      - {t: 2.85, frame: [115, 40, 545, 320], ease: linear}
+    duration: 1.92
+    src: [[0, 53.00], [0.50, 53.00], [1.92, 54.42]]
+    sound: mute
+    subtitles: false
+    camera: [{t: 0, frame: [83, 25, 595, 313], pad: 0}]
+    labels:
+      - {text: "What I wrote", anchor: [229, 108], side: right, at: -0.6, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
+      - {text: "Granola generated", anchor: [406, 125], side: right, at: -0.6, size: 50, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
 
-  - id: how
+  - id: builds                                   # "Instead of replacing my notes, it builds on them."
     type: ui
     source: main
-    duration: 7.7
-    src: {start: 15.70, speed: 1}
-    camera:
-      - {t: 0.0, frame: [100, 20, 560, 340]}
-      - {t: 7.7, frame: [110, 25, 500, 250], ease: inOutSine}
+    duration: 3.18
+    src: {start: 54.42, speed: 1}
+    enter: none
+    camera: [{t: 0, frame: [83, 25, 595, 313], pad: 0}]
+    labels:
+      - {text: "What I wrote", anchor: [229, 108], side: right, at: -1, until: 2.88, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}
+      - {text: "Granola generated", anchor: [406, 125], side: right, at: -1, until: 2.88, size: 50, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
 
-  - id: decisions
+  - id: context                                  # "If I want more context about something,"
     type: ui
     source: main
-    duration: 10.2
-    src: {start: 23.85, speed: 1}
-    camera:
-      - {t: 0.0, frame: [110, 150, 510, 225]}
-      - {t: 7.3, frame: [110, 150, 510, 225]}
-      - {t: 7.95, frame: [110, 235, 510, 300], ease: inOutCubic}
-    rings:
-      - {box: [138, 168, 480, 196], at: 2.09, color: "#2E6B1F"}     # 12 chocolate chips
-      - {box: [138, 200, 470, 213], at: 5.07, color: "#2E6B1F"}     # sea salt
-      - {box: [138, 262, 312, 276], at: 7.83, color: "#2E6B1F"}     # September 15th
+    enter: none                                  # critic: the dissolve ghosted two pages of text
+    duration: 2.40
+    src: {start: 67.20, speed: 1}
+    camera: [{t: 0, frame: [24, 8, 616, 341], pad: 0}]
+    rings: [{box: [145, 188, 476, 214], at: 0.92}]
+    labels:
+      - {text: "Granola generated", anchor: [300, 187], side: above, at: 1.32, size: 50, fill: "#eaebe5", color: "#292929", edge: "#eaebe5"}
 
-  - id: record
+  - id: magnifier                                # the one deliberate camera move; click on the magnifying glass
     type: ui
     source: main
-    duration: 1.95
-    src: {start: 36.90, speed: 1}
-    camera: [{t: 0.0, frame: [110, 140, 510, 300]}]
-    kicks: [{at: 1.28, amount: 0.05}]                                 # "30"
-
-  - id: yours
-    type: ui
-    source: main
-    duration: 7.55
-    src: {start: 46.65, speed: 1}
+    duration: 3.26
+    src: {start: 70.60, speed: 1}
+    sound: mute
+    subtitles: false
     camera:
-      - {t: 0.0, frame: [110, 85, 520, 310]}
-      - {t: 7.55, frame: [118, 92, 512, 303], ease: linear}
-    rings:
-      - {box: [140, 101, 230, 115], at: 1.93, color: "#1A1A1A"}     # you wrote: Finalize the recipe
-      - {box: [140, 245, 255, 258], at: 2.25, color: "#1A1A1A"}     # you wrote: Decide on a launch date
-      - {box: [138, 118, 405, 131], at: 4.21, color: "#2E6B1F"}     # Granola added: taste test feedback
-      - {box: [150, 280, 480, 293], at: 4.55, color: "#2E6B1F"}     # Granola added: enough time for packaging
+      - {t: 0, frame: [24, 8, 616, 341], pad: 0}
+      - {t: 0.80, frame: [66, 58, 578, 346], pad: 0, ease: outExpo}
+    rings: [{box: [494, 188, 506, 200], at: 1.05, until: 1.80, radius: 14}]
+    caption: {text: "See where it *came from.*", in: 0.85, out: 3.20, size: 48}
+    clicks: [1.70]
+    busy: [[2.80, 3.26]]
 
-  - id: who
+  - id: summary                                  # "and here I could see a transcript summary of the relevant part of the conversation."
     type: ui
     source: main
-    duration: 8.7
-    src: {start: 57.75, speed: 1}
-    camera:
-      - {t: 0.0, frame: [100, 20, 560, 340]}
-      - {t: 2.9, frame: [100, 20, 560, 340]}
-      - {t: 3.6, frame: [110, 170, 520, 240], ease: inOutCubic}
-    rings:
-      - {box: [138, 186, 500, 216], at: 5.11, color: "#2E6B1F"}     # Elizabeth signed up for
-      - {box: [138, 220, 470, 233], at: 7.51, color: "#2E6B1F"}     # what I signed up for
+    duration: 4.54
+    src: {start: 73.86, speed: 1}
+    enter: none
+    camera: [{t: 0, frame: [66, 58, 578, 346], pad: 0}]
+    rings: [{box: [200, 205, 508, 318], at: 1.28, radius: 12}]
+    labels:
+      - {text: "TRANSCRIPT SUMMARY", anchor: [258, 219], side: over, at: 1.72, size: 32, fill: "#ffffff", color: text, edge: "#ffffff"}   # crisp copy over the 360p header
 
-  - id: receipts
+  - id: yours                                    # "If I want to make any edits to these notes, here I could click in and type in my changes."
     type: ui
     source: main
-    duration: 8.55
-    src: {start: 69.55, speed: 1}
-    camera:
-      - {t: 0.0, frame: [120, 90, 520, 240]}
-      - {t: 3.4, frame: [120, 90, 520, 240]}
-      - {t: 4.2, frame: [190, 192, 515, 312], ease: inOutCubic}
-    pulses:
-      - {point: [500, 193], at: 3.09, color: "#2E6B1F", r: 9}        # the magnifying glass
-    rings:
-      - {box: [202, 207, 505, 304], at: 5.59, color: "#2E6B1F", radius: 12}   # transcript summary
-    clicks: [3.09]
-    exit: {type: whip, d: 0.25, k: 2.0}
+    duration: 4.74
+    src: {start: 79.00, speed: 1}
+    camera: [{t: 0, frame: [66, 58, 578, 346], pad: 0}]
+    rings: [{box: [153, 141, 380, 157], at: 1.14}]
+    labels:
+      - {text: "What I wrote", anchor: [323, 157], side: below, at: 3.20, size: 50, fill: "#292929", color: "#f7f7f2", edge: "#292929"}   # the edited line is yours again
+      - {text: "Footage and voice: Kevin Stratvert, Granola-sponsored tutorial", anchor: [322, 64], side: over, at: 0.3, size: 28, fill: bg, color: muted, edge: bg}
+    clicks: [1.90]
 
   - id: end
     type: end
-    duration: 2.5
-    lockup:
-      wordmark: Granola
-      font: "InterVariable@SemiBold"
-      width: 520
-      y: 400
-    command: {text: "granola.ai", prefix: "", at: 0.45}
+    duration: 3.40
+    enter: none                                  # cut to paper, logo fades in
+    glow: 0
+    lockup: {image: brand/logos/Granola_lockup_black_lg.png, width: 600, y: 380}
+    command: {text: "granola.ai", prefix: "", at: 1.05, cps: 20}
+    tagline: {text: "The AI notepad for back-to-back meetings", at: 0.55, size: 56, font: serif, color: text}

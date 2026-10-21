@@ -37,6 +37,7 @@ DEFAULTS = {
         "sfx": True,
         "gain": 1.0,
         "open_hit": False,          # impact on frame 0
+        "end_hit": True,            # big impact + drone under the end card (off for calm brands)
         "beat": None,               # {bpm, from, to} pulse bed, kick on beats, hats on off-beats
         "vo": None,                 # path to narration; never altered, SFX ducked under it
         "dialog": False,            # true: every video shot plays its own recorded sound (talking heads)

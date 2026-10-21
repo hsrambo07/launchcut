@@ -178,7 +178,9 @@ def rounded_mask(w, h, r):
 
 def pill(dst, x, y, w, h, fill, edge, alpha, radius=None):
     m = rounded_mask(int(w), int(h), int(radius if radius is not None else h / 2 - 1)).astype(np.float32) / 255
-    e = np.clip(m - cv2.erode(m, np.ones((5, 5), np.uint8)), 0, 1)
+    # erode with a zero border, otherwise the straight edges touching the array border never erode and the
+    # outline only shows on the rounded corners
+    e = np.clip(m - cv2.erode(m, np.ones((5, 5), np.uint8), borderType=cv2.BORDER_CONSTANT, borderValue=0), 0, 1)
     f = np.empty(m.shape + (3,), np.float32)
     f[:] = fill
     blit(dst, f, m, x, y, alpha * 0.95)

@@ -281,8 +281,9 @@ class Renderer:
             w = tw + 2 * padx
             side = lb.get("side", "above")
             gap = 14 * self.k
-            x = p[0] - w / 2 if side in ("above", "below") else (p[0] + gap if side == "right" else p[0] - gap - w)
+            x = p[0] - w / 2 if side in ("above", "below", "over") else (p[0] + gap if side == "right" else p[0] - gap - w)
             y = p[1] - gap - h if side == "above" else (p[1] + gap if side == "below" else p[1] - h / 2)
+            # side "over": centred on the anchor, covering the original low-res text with a crisp copy
             y += (8 * self.k) * (1 - u_) * (1 if side == "above" else -1)
             fill = self.color(lb.get("fill", "bg"))
             pill(img, x, y, w, h, fill, self.color(lb.get("edge", "accent")), al, radius=h * 0.3)

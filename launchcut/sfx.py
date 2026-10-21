@@ -171,9 +171,10 @@ def build(cut, renderer=None):
                 b.put(b.key(), s0 + float(sh.get("in", 0.0)) + i * 0.06 + 0.02, 0.35, -0.3 + 0.6 * i / max(words, 1))
             b.sheet.append((s0, f"{sh['id']}: words land"))
         if sh["type"] == "end":
-            b.put(b.impact(2.0, 62, 32), s0, 1.0, why=f"{sh['id']}: lockup lands")
-            b.put(b.sparkle(1.0, 220), s0 + 0.02, 0.35)
-            b.put(b.chime((523, 784, 1046), 1.6), s0 + 0.05, 0.3)
+            if A.get("end_hit", True):          # a big landing; calm brands turn it off and keep only the chime
+                b.put(b.impact(2.0, 62, 32), s0, 1.0, why=f"{sh['id']}: lockup lands")
+                b.put(b.sparkle(1.0, 220), s0 + 0.02, 0.35)
+            b.put(b.chime((523, 784, 1046), 1.6), s0 + 0.05, 0.3 if A.get("end_hit", True) else 0.18, why=f"{sh['id']}: lockup")
             cmd = sh.get("command")
             if cmd:
                 cmd = {"text": cmd} if isinstance(cmd, str) else cmd
@@ -185,7 +186,8 @@ def build(cut, renderer=None):
             if tag:
                 at = float(tag.get("at", 0.92)) if isinstance(tag, dict) else 0.92
                 b.put(b.chime((1046, 1568, 2093), 1.4), s0 + at, 0.22, why=f"{sh['id']}: tagline")
-            b.put(b.lp(b.drone(max(0.6, sh["duration"] - 0.15), 82, 82), 900), s0 + 0.1, 0.3)
+            if A.get("end_hit", True):
+                b.put(b.lp(b.drone(max(0.6, sh["duration"] - 0.15), 82, 82), 900), s0 + 0.1, 0.3)
     beat = A.get("beat")
     if beat:
         step = 60.0 / float(beat.get("bpm", 120))
@@ -258,9 +260,12 @@ def mix(cut, renderer=None):
     fade = np.ones(n)
     fade[-int(0.25 * SR):] = np.linspace(1, 0, int(0.25 * SR)) ** 2
     sfx *= fade[:, None]
+    # fixed bus level: a pop sounds the same in every cut, whatever the loudest cue is (peak-normalising made removing
+    # one cue shift all the others); only scale down if it would clip
+    sfx = sfx * 0.45 * float(A.get("gain", 1.0))
     peak = np.abs(sfx).max()
-    if peak > 0:
-        sfx = sfx / peak * 0.89 * float(A.get("gain", 1.0))
+    if peak > 0.89:
+        sfx *= 0.89 / peak
     outs = {"sfx": cut.out(f"{cut.name}-sfx.wav")}
     write_wav(outs["sfx"], sfx)
     vo = read_audio(A["vo"], cut.duration)[:n] if A.get("vo") else None
